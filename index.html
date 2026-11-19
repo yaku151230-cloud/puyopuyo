@@ -1029,62 +1029,97 @@
       }
     }
 
-    // 本家ぷよぷよ風の「なめらかなネック（くびれ）」で同色ぷよをつなぐ描画
-    function drawSmoothNeck(c2d, px, py, size, dir, col) {
-      const cx = px + size / 2;
-      const cy = py + size / 2;
+    // 本家風：2つのぷよの境界で水滴/ゼリーが引っ張り合ってできる「なめらかな合流くびれ」を描く
+    // 右隣・下隣とのペアごとに1回だけ描くことで、重なりや線が出ないようにする
+    function drawPairBridge(c2d, x1, y1, x2, y2, size, colorId) {
+      const col = COLORS[colorId];
+      if (!col) return;
+
+      const cx1 = x1 * size + size / 2;
+      const cy1 = (y1 - HIDDEN_ROWS) * size + size / 2;
+      const cx2 = x2 * size + size / 2;
+      const cy2 = (y2 - HIDDEN_ROWS) * size + size / 2;
+
       const r = size * 0.42;
-      const neckHalf = size * 0.20; // くびれの太さ（ぷよの半径より細くして「くびれ」を作る）
-      const reach = size * 0.56;    // 隣のぷよの中心側へ少し食い込ませて継ぎ目を消す
+      const pinch = size * 0.14; // くびれの絞り込み量（小さいほど「くびれ」らしく、大きいほど太くつながる）
 
       c2d.save();
-      c2d.beginPath();
 
-      if (dir === "right") {
-        const xStart = cx + r * 0.48;
-        const xEnd = cx + reach;
-        c2d.moveTo(xStart, cy - neckHalf);
-        c2d.quadraticCurveTo((xStart + xEnd) / 2, cy - neckHalf * 0.72, xEnd, cy - neckHalf * 0.92);
-        c2d.lineTo(xEnd, cy + neckHalf * 0.92);
-        c2d.quadraticCurveTo((xStart + xEnd) / 2, cy + neckHalf * 0.72, xStart, cy + neckHalf);
+      if (y1 === y2) {
+        // 横並びの連結（x1 < x2）
+        const leftX = Math.min(cx1, cx2);
+        const rightX = Math.max(cx1, cx2);
+        const midX = (leftX + rightX) / 2;
+
+        // 2つの円が交差する上下の接点付近から、中央でくびれる砂時計型ブリッジ
+        const dx = rightX - leftX;
+        const halfSpan = Math.min(dx * 0.46, r * 0.86);
+        const startX = midX - halfSpan;
+        const endX = midX + halfSpan;
+        const edgeY = r * 0.56;
+        const midHalfH = Math.max(size * 0.14, edgeY - pinch);
+
+        c2d.beginPath();
+        c2d.moveTo(startX, cy1 - edgeY);
+        c2d.bezierCurveTo(
+          midX - halfSpan * 0.42, cy1 - midHalfH,
+          midX + halfSpan * 0.42, cy1 - midHalfH,
+          endX, cy1 - edgeY
+        );
+        c2d.lineTo(endX, cy1 + edgeY);
+        c2d.bezierCurveTo(
+          midX + halfSpan * 0.42, cy1 + midHalfH,
+          midX - halfSpan * 0.42, cy1 + midHalfH,
+          startX, cy1 + edgeY
+        );
         c2d.closePath();
-      } else if (dir === "left") {
-        const xStart = cx - r * 0.48;
-        const xEnd = cx - reach;
-        c2d.moveTo(xStart, cy - neckHalf);
-        c2d.quadraticCurveTo((xStart + xEnd) / 2, cy - neckHalf * 0.72, xEnd, cy - neckHalf * 0.92);
-        c2d.lineTo(xEnd, cy + neckHalf * 0.92);
-        c2d.quadraticCurveTo((xStart + xEnd) / 2, cy + neckHalf * 0.72, xStart, cy + neckHalf);
+
+        const grad = c2d.createLinearGradient(midX, cy1 - r, midX, cy1 + r);
+        grad.addColorStop(0, col.light);
+        grad.addColorStop(0.35, col.fill);
+        grad.addColorStop(1, col.deep);
+        c2d.fillStyle = grad;
+        c2d.fill();
+      } else if (x1 === x2) {
+        // 縦並びの連結（y1 < y2）
+        const topY = Math.min(cy1, cy2);
+        const botY = Math.max(cy1, cy2);
+        const midY = (topY + botY) / 2;
+
+        const dy = botY - topY;
+        const halfSpan = Math.min(dy * 0.46, r * 0.86);
+        const startY = midY - halfSpan;
+        const endY = midY + halfSpan;
+        const edgeX = r * 0.56;
+        const midHalfW = Math.max(size * 0.14, edgeX - pinch);
+
+        c2d.beginPath();
+        c2d.moveTo(cx1 - edgeX, startY);
+        c2d.bezierCurveTo(
+          cx1 - midHalfW, midY - halfSpan * 0.42,
+          cx1 - midHalfW, midY + halfSpan * 0.42,
+          cx1 - edgeX, endY
+        );
+        c2d.lineTo(cx1 + edgeX, endY);
+        c2d.bezierCurveTo(
+          cx1 + midHalfW, midY + halfSpan * 0.42,
+          cx1 + midHalfW, midY - halfSpan * 0.42,
+          cx1 + edgeX, startY
+        );
         c2d.closePath();
-      } else if (dir === "down") {
-        const yStart = cy + r * 0.48;
-        const yEnd = cy + reach;
-        c2d.moveTo(cx - neckHalf, yStart);
-        c2d.quadraticCurveTo(cx - neckHalf * 0.72, (yStart + yEnd) / 2, cx - neckHalf * 0.92, yEnd);
-        c2d.lineTo(cx + neckHalf * 0.92, yEnd);
-        c2d.quadraticCurveTo(cx + neckHalf * 0.72, (yStart + yEnd) / 2, cx + neckHalf, yStart);
-        c2d.closePath();
-      } else if (dir === "up") {
-        const yStart = cy - r * 0.48;
-        const yEnd = cy - reach;
-        c2d.moveTo(cx - neckHalf, yStart);
-        c2d.quadraticCurveTo(cx - neckHalf * 0.72, (yStart + yEnd) / 2, cx - neckHalf * 0.92, yEnd);
-        c2d.lineTo(cx + neckHalf * 0.92, yEnd);
-        c2d.quadraticCurveTo(cx + neckHalf * 0.72, (yStart + yEnd) / 2, cx + neckHalf, yStart);
-        c2d.closePath();
+
+        const grad = c2d.createLinearGradient(cx1 - r, midY, cx1 + r, midY);
+        grad.addColorStop(0, col.light);
+        grad.addColorStop(0.5, col.fill);
+        grad.addColorStop(1, col.deep);
+        c2d.fillStyle = grad;
+        c2d.fill();
       }
 
-      const neckGrad = c2d.createLinearGradient(px, py, px, py + size);
-      neckGrad.addColorStop(0, col.light);
-      neckGrad.addColorStop(0.35, col.fill);
-      neckGrad.addColorStop(1, col.deep);
-
-      c2d.fillStyle = neckGrad;
-      c2d.fill();
       c2d.restore();
     }
 
-    function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1, scaleX = 1, scaleY = 1) {
+    function paintPuyo(c2d, px, py, size, colorId, alpha = 1, scaleX = 1, scaleY = 1) {
       if (!colorId) return;
       const col = COLORS[colorId];
       const cx = px + size / 2;
@@ -1099,20 +1134,11 @@
       c2d.scale(scaleX, scaleY);
       c2d.translate(-cx, -cy);
 
-      // 接地影
       if (alpha > 0.4) {
         c2d.fillStyle = "rgba(0, 0, 0, 0.34)";
         c2d.beginPath();
         c2d.ellipse(cx, cy + ryBot * 0.96, rx * 0.76, Math.max(2, size * 0.075), 0, 0, Math.PI * 2);
         c2d.fill();
-      }
-
-      // 同色隣り合い時の「なめらかなくびれ（ネック）」を線なしで描画
-      if (link) {
-        if (link.up) drawSmoothNeck(c2d, px, py, size, "up", col);
-        if (link.down) drawSmoothNeck(c2d, px, py, size, "down", col);
-        if (link.left) drawSmoothNeck(c2d, px, py, size, "left", col);
-        if (link.right) drawSmoothNeck(c2d, px, py, size, "right", col);
       }
 
       const traceBody = () => {
@@ -1123,7 +1149,6 @@
         c2d.closePath();
       };
 
-      // 本体ベース
       traceBody();
       const baseGrad = c2d.createLinearGradient(cx, cy - ryTop, cx, cy + ryBot);
       baseGrad.addColorStop(0, col.light);
@@ -1132,7 +1157,6 @@
       c2d.fillStyle = baseGrad;
       c2d.fill();
 
-      // 内部の奥行き＆バウンス光＆ソフトハイライト
       c2d.save();
       traceBody();
       c2d.clip();
@@ -1174,13 +1198,11 @@
 
       c2d.restore();
 
-      // 繊細なリムライン
       traceBody();
       c2d.strokeStyle = col.rim;
       c2d.lineWidth = 1;
       c2d.stroke();
 
-      // 小さなツヤ点
       c2d.fillStyle = "rgba(255, 255, 255, 0.78)";
       c2d.beginPath();
       c2d.ellipse(
@@ -1261,21 +1283,30 @@
       ctx.lineTo(dx - 6, dy + 6);
       ctx.stroke();
 
+      // 1. まず隣り合う同色ぷよの「くびれブリッジ」を先に描画（ぷよ本体の後ろで自然になじませる）
       for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
           const c = board[y][x];
           if (!c) continue;
-          const link = {
-            up: y > HIDDEN_ROWS && board[y - 1][x] === c,
-            down: y < TOTAL_ROWS - 1 && board[y + 1][x] === c,
-            left: x > 0 && board[y][x - 1] === c,
-            right: x < COLS - 1 && board[y][x + 1] === c
-          };
+          if (x + 1 < COLS && board[y][x + 1] === c) {
+            drawPairBridge(ctx, x, y, x + 1, y, cellSize, c);
+          }
+          if (y + 1 < TOTAL_ROWS && board[y + 1][x] === c) {
+            drawPairBridge(ctx, x, y, x, y + 1, cellSize, c);
+          }
+        }
+      }
+
+      // 2. その上に各ぷよ本体を描画
+      for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const c = board[y][x];
+          if (!c) continue;
           const pop = poppingCells.get(`${x},${y}`);
           const sq = getSquashScale(x, y);
           const sx = pop ? pop.scaleX : sq.sx;
           const sy = pop ? pop.scaleY : sq.sy;
-          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, link, 1, sx, sy);
+          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, 1, sx, sy);
         }
       }
 
@@ -1285,10 +1316,10 @@
           while (canPlace(current.x, gy + 1, current.rot)) gy += 1;
           const gs = subPos(current.x, gy, current.rot);
           if (gy >= HIDDEN_ROWS) {
-            paintPuyo(ctx, current.x * cellSize, (gy - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.22);
+            paintPuyo(ctx, current.x * cellSize, (gy - HIDDEN_ROWS) * cellSize, cellSize, current.main, 0.22);
           }
           if (gs.y >= HIDDEN_ROWS) {
-            paintPuyo(ctx, gs.x * cellSize, (gs.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.22);
+            paintPuyo(ctx, gs.x * cellSize, (gs.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, 0.22);
           }
         }
 
