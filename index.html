@@ -30,7 +30,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 24px;
+      gap: 28px;
       z-index: 100;
       padding: 24px;
     }
@@ -41,62 +41,24 @@
 
     .title-logo {
       margin: 0;
-      font-size: 34px;
+      font-size: 36px;
       font-weight: 800;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.16em;
       color: #f9fafb;
     }
 
-    .title-card {
+    .title-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
       width: 100%;
-      max-width: 300px;
-      background: #14171d;
-      border: 1px solid #262b35;
-      border-radius: 14px;
-      padding: 14px 16px;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-    }
-
-    .label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: #9ca3af;
-      margin-bottom: 8px;
-    }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-
-    .chip-btn {
-      padding: 9px 6px;
-      border-radius: 10px;
-      border: 1px solid #2a303c;
-      background: #1b1f27;
-      color: #d1d5db;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
-    }
-
-    .chip-btn.active {
-      background: #e5e7eb;
-      border-color: #f9fafb;
-      color: #0b0d10;
+      max-width: 240px;
     }
 
     .start-btn {
-      padding: 13px 44px;
+      width: 100%;
+      padding: 14px 28px;
       font-size: 16px;
       font-weight: 700;
       letter-spacing: 0.1em;
@@ -110,6 +72,23 @@
 
     .start-btn:active {
       background: #d1d5db;
+    }
+
+    .title-sub-btn {
+      width: 100%;
+      padding: 11px 24px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #d1d5db;
+      background: #14171d;
+      border: 1px solid #262b36;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .title-sub-btn:active {
+      background: #1c2029;
     }
 
     /* ゲーム画面 */
@@ -251,16 +230,17 @@
       letter-spacing: 0.02em;
     }
 
-    /* モーダル */
+    /* 設定モーダル（シックなカード＆行リストスタイル） */
     .modal-bg {
       position: fixed;
       inset: 0;
-      background: rgba(3, 5, 8, 0.72);
+      background: rgba(4, 6, 9, 0.78);
+      backdrop-filter: blur(4px);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 80;
-      padding: 20px;
+      z-index: 120;
+      padding: 18px;
     }
 
     .modal-bg.open {
@@ -269,32 +249,107 @@
 
     .modal-panel {
       width: 100%;
-      max-width: 310px;
-      background: #14171d;
-      border: 1px solid #282e3a;
+      max-width: 340px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #11141a;
+      border: 1px solid #232834;
       border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
+      padding: 18px 16px;
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.72);
     }
 
-    .modal-panel h2 {
-      margin: 0 0 16px;
-      font-size: 16px;
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #1e232e;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 15px;
       font-weight: 800;
-      letter-spacing: 0.06em;
-      text-align: center;
+      letter-spacing: 0.08em;
       color: #f9fafb;
     }
 
-    .sec {
-      margin-bottom: 14px;
+    .modal-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: #9ca3af;
+      background: #181c24;
+      border: 1px solid #262c38;
+      border-radius: 999px;
+      padding: 3px 9px;
+    }
+
+    .setting-card {
+      background: #161a22;
+      border: 1px solid #222733;
+      border-radius: 12px;
+      padding: 11px 12px;
+      margin-bottom: 10px;
+    }
+
+    .setting-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #9ca3af;
+      margin: 0;
+    }
+
+    .current-val {
+      font-size: 11px;
+      font-weight: 700;
+      color: #e5e7eb;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .chip-btn {
+      padding: 8px 6px;
+      border-radius: 8px;
+      border: 1px solid #272d3a;
+      background: #1c212b;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+    }
+
+    .chip-btn.active {
+      background: #f3f4f6;
+      border-color: #ffffff;
+      color: #0b0d10;
     }
 
     .actions {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-top: 16px;
+      margin-top: 14px;
     }
 
     .act-btn {
@@ -309,20 +364,28 @@
     }
 
     .act-reset {
-      background: rgba(239, 68, 68, 0.14);
+      background: rgba(239, 68, 68, 0.13);
       border-color: rgba(239, 68, 68, 0.35);
       color: #fca5a5;
     }
 
     .act-secondary {
-      background: #1e232d;
-      border-color: #2f3644;
+      background: #1b2029;
+      border-color: #2b3240;
       color: #e5e7eb;
     }
 
     .act-close {
       background: #f3f4f6;
       color: #0b0d10;
+    }
+
+    .gameover-title {
+      margin: 4px 0 16px;
+      font-size: 16px;
+      font-weight: 800;
+      text-align: center;
+      color: #f9fafb;
     }
   </style>
 </head>
@@ -331,23 +394,16 @@
   <div id="title-screen">
     <h1 class="title-logo">ぷよぷよ</h1>
 
-    <div class="title-card">
-      <div class="label">ぷよの色数</div>
-      <div class="grid-3">
-        <button type="button" class="chip-btn color-choice" data-colors="3">3色</button>
-        <button type="button" class="chip-btn color-choice active" data-colors="4">4色</button>
-        <button type="button" class="chip-btn color-choice" data-colors="5">5色</button>
-      </div>
+    <div class="title-actions">
+      <button type="button" id="start-btn" class="start-btn">スタート</button>
+      <button type="button" id="title-settings-btn" class="title-sub-btn">設定</button>
     </div>
-
-    <button type="button" id="start-btn" class="start-btn">スタート</button>
   </div>
-
-  <!-- 設定ボタン -->
-  <button type="button" id="settings-btn">設定</button>
 
   <!-- ゲーム画面 -->
   <div id="game-screen">
+    <button type="button" id="settings-btn">設定</button>
+
     <div class="stage">
       <div class="board-box">
         <canvas id="board-canvas"></canvas>
@@ -363,35 +419,59 @@
     <div class="hint">左右スワイプ: 移動 / 下ドラッグ・フリック: 落下 / 左右タップ: 回転</div>
   </div>
 
-  <!-- 設定モーダル -->
+  <!-- 設定モーダル（タイトル・ゲーム画面 共用） -->
   <div id="settings-modal" class="modal-bg">
     <div class="modal-panel">
-      <h2>設定</h2>
+      <div class="modal-header">
+        <h2>設定</h2>
+        <span id="modal-context-badge" class="modal-badge">TITLE</span>
+      </div>
 
-      <div class="sec">
-        <div class="label">落下スピード</div>
+      <div class="setting-card">
+        <div class="setting-card-head">
+          <span class="label">落下スピード</span>
+          <span id="speed-val-label" class="current-val">ふつう</span>
+        </div>
         <div class="grid-2">
-          <button type="button" class="chip-btn speed-choice" data-speed="0">手動のみ</button>
-          <button type="button" class="chip-btn speed-choice" data-speed="1000">ゆっくり</button>
-          <button type="button" class="chip-btn speed-choice active" data-speed="600">ふつう</button>
-          <button type="button" class="chip-btn speed-choice" data-speed="250">はやい</button>
+          <button type="button" class="chip-btn speed-choice" data-speed="0" data-label="手動のみ">手動のみ</button>
+          <button type="button" class="chip-btn speed-choice" data-speed="1000" data-label="ゆっくり">ゆっくり</button>
+          <button type="button" class="chip-btn speed-choice active" data-speed="600" data-label="ふつう">ふつう</button>
+          <button type="button" class="chip-btn speed-choice" data-speed="250" data-label="はやい">はやい</button>
         </div>
       </div>
 
-      <div class="sec">
-        <div class="label">フリック感度</div>
+      <div class="setting-card">
+        <div class="setting-card-head">
+          <span class="label">ぷよの色数</span>
+          <span id="color-val-label" class="current-val">4色</span>
+        </div>
         <div class="grid-3">
-          <button type="button" class="chip-btn sens-choice" data-sens="low">ゆったり</button>
-          <button type="button" class="chip-btn sens-choice active" data-sens="mid">ふつう</button>
-          <button type="button" class="chip-btn sens-choice" data-sens="high">敏感</button>
+          <button type="button" class="chip-btn color-choice" data-colors="3" data-label="3色">3色</button>
+          <button type="button" class="chip-btn color-choice active" data-colors="4" data-label="4色">4色</button>
+          <button type="button" class="chip-btn color-choice" data-colors="5" data-label="5色">5色</button>
         </div>
       </div>
 
-      <div class="sec">
-        <div class="label">落下予測（ゴースト）</div>
+      <div class="setting-card">
+        <div class="setting-card-head">
+          <span class="label">フリック感度</span>
+          <span id="sens-val-label" class="current-val">ふつう</span>
+        </div>
+        <div class="grid-3">
+          <button type="button" class="chip-btn sens-choice" data-sens="low" data-label="ゆったり">ゆったり</button>
+          <button type="button" class="chip-btn sens-choice active" data-sens="mid" data-label="ふつう">ふつう</button>
+          <button type="button" class="chip-btn sens-choice" data-sens="high" data-label="敏感">敏感</button>
+        </div>
+      </div>
+
+      <div class="setting-card">
+        <div class="setting-card-head">
+          <span class="label">落下予測（ゴースト）</span>
+          <span id="ghost-val-label" class="current-val">表示する</span>
+        </div>
         <div class="grid-2">
-          <button type="button" class="chip-btn ghost-choice active" data-ghost="1">表示する</button>
-          <button type="button" class="chip-btn ghost-choice" data-ghost="0">非表示</button>
+          <button type="button" class="chip-btn ghost-choice active" data-ghost="1" data-label="表示する">表示する</button>
+          <button type="button" class="chip-btn ghost-choice" data-ghost="0" data-label="非表示">非表示</button>
         </div>
       </div>
 
@@ -405,7 +485,7 @@
   <!-- ゲームオーバーモーダル -->
   <div id="gameover-modal" class="modal-bg">
     <div class="modal-panel">
-      <h2>ここまで積み上がりました</h2>
+      <h2 class="gameover-title">ここまで積み上がりました</h2>
       <div class="actions">
         <button type="button" id="retry-btn" class="act-btn act-close">リトライ</button>
         <button type="button" id="back-title-btn" class="act-btn act-secondary">タイトル画面へ</button>
@@ -419,14 +499,13 @@
     const HIDDEN_ROWS = 1;
     const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS;
 
-    // 黒背景に映える目なしの柔らかいゼリーカラー
     const COLORS = [
       null,
-      { light: "#fca5a5", fill: "#ef4444", deep: "#991b1b" }, // 赤
-      { light: "#93c5fd", fill: "#3b82f6", deep: "#1e40af" }, // 青
-      { light: "#86efac", fill: "#22c55e", deep: "#166534" }, // 緑
-      { light: "#fde047", fill: "#eab308", deep: "#854d0e" }, // 黄
-      { light: "#d8b4fe", fill: "#a855f7", deep: "#6b21a8" }  // 紫
+      { light: "#fca5a5", fill: "#ef4444", deep: "#991b1b" },
+      { light: "#93c5fd", fill: "#3b82f6", deep: "#1e40af" },
+      { light: "#86efac", fill: "#22c55e", deep: "#166534" },
+      { light: "#fde047", fill: "#eab308", deep: "#854d0e" },
+      { light: "#d8b4fe", fill: "#a855f7", deep: "#6b21a8" }
     ];
 
     const DIRS = [
@@ -444,14 +523,21 @@
 
     const titleScreen = document.getElementById("title-screen");
     const startBtn = document.getElementById("start-btn");
+    const titleSettingsBtn = document.getElementById("title-settings-btn");
     const settingsBtn = document.getElementById("settings-btn");
     const settingsModal = document.getElementById("settings-modal");
+    const modalContextBadge = document.getElementById("modal-context-badge");
     const closeSettingsBtn = document.getElementById("close-settings-btn");
     const resetBtn = document.getElementById("reset-btn");
     const gameoverModal = document.getElementById("gameover-modal");
     const retryBtn = document.getElementById("retry-btn");
     const backTitleBtn = document.getElementById("back-title-btn");
     const chainPop = document.getElementById("chain-pop");
+
+    const speedValLabel = document.getElementById("speed-val-label");
+    const colorValLabel = document.getElementById("color-val-label");
+    const sensValLabel = document.getElementById("sens-val-label");
+    const ghostValLabel = document.getElementById("ghost-val-label");
 
     const boardCanvas = document.getElementById("board-canvas");
     const ctx = boardCanvas.getContext("2d");
@@ -959,7 +1045,6 @@
     function draw() {
       ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
-      // 暗い盤面に馴染むシックなグリッド線
       ctx.strokeStyle = "#191e27";
       ctx.lineWidth = 1;
       for (let x = 1; x < COLS; x++) {
@@ -1033,35 +1118,45 @@
       }
     }
 
-    // タイトル色数選択
-    document.querySelectorAll(".color-choice").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".color-choice").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        colorCount = Number(btn.dataset.colors);
-      });
-    });
+    function openSettings(fromTitle) {
+      if (fromTitle) {
+        modalContextBadge.textContent = "TITLE";
+        resetBtn.style.display = "none";
+      } else {
+        if (!running || gameOver) return;
+        modalContextBadge.textContent = "GAME";
+        resetBtn.style.display = "block";
+        settingsOpen = true;
+        clearFallTimer();
+      }
+      settingsModal.classList.add("open");
+    }
 
-    // スタート
+    function closeSettings() {
+      settingsModal.classList.remove("open");
+      if (running) {
+        settingsOpen = false;
+        setupFallTimer();
+        draw();
+      }
+    }
+
+    // タイトル画面ボタン
     startBtn.addEventListener("click", () => {
       titleScreen.classList.add("hidden");
       resetBoardState();
     });
 
-    // 設定開閉
-    settingsBtn.addEventListener("click", () => {
-      if (!running || gameOver) return;
-      settingsOpen = true;
-      clearFallTimer();
-      settingsModal.classList.add("open");
+    titleSettingsBtn.addEventListener("click", () => {
+      openSettings(true);
     });
 
-    closeSettingsBtn.addEventListener("click", () => {
-      settingsOpen = false;
-      settingsModal.classList.remove("open");
-      setupFallTimer();
-      draw();
+    // ゲーム画面 設定ボタン
+    settingsBtn.addEventListener("click", () => {
+      openSettings(false);
     });
+
+    closeSettingsBtn.addEventListener("click", closeSettings);
 
     // 落下スピード
     document.querySelectorAll(".speed-choice").forEach((btn) => {
@@ -1069,7 +1164,27 @@
         document.querySelectorAll(".speed-choice").forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         dropMs = Number(btn.dataset.speed);
-        setupFallTimer();
+        speedValLabel.textContent = btn.dataset.label;
+        if (running) setupFallTimer();
+      });
+    });
+
+    // ぷよの色数（タイトル・ゲーム画面 共用）
+    document.querySelectorAll(".color-choice").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".color-choice").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        colorCount = Number(btn.dataset.colors);
+        colorValLabel.textContent = btn.dataset.label;
+
+        // すでに存在するネクストの色が新しい色数を超えていたら再生成
+        if (nextQueue.length > 0) {
+          nextQueue = nextQueue.map((p) => ({
+            main: p.main > colorCount ? randColor() : p.main,
+            sub: p.sub > colorCount ? randColor() : p.sub
+          }));
+          drawNext();
+        }
       });
     });
 
@@ -1079,6 +1194,7 @@
         document.querySelectorAll(".sens-choice").forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         sensitivity = btn.dataset.sens;
+        sensValLabel.textContent = btn.dataset.label;
       });
     });
 
@@ -1088,6 +1204,7 @@
         document.querySelectorAll(".ghost-choice").forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         showGhost = btn.dataset.ghost === "1";
+        ghostValLabel.textContent = btn.dataset.label;
         draw();
       });
     });
