@@ -1,954 +1,858 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷよぷよ風落ち物パズル</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet">
-    <style>
-        /* スクロール・ズーム・長押しメニューを完全に防止 */
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            touch-action: none;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Puyo Practice</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --surface: #ffffff;
+      --board-bg: #ebedf0;
+      --grid-line: #e0e3e8;
+      --text: #22262e;
+      --subtext: #6b7280;
+      --accent: #3b82f6;
+      --border: #d1d5db;
+    }
 
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #f8fafc; /* シンプルなライトグレー背景 */
-            font-family: 'M PLUS Rounded 1c', sans-serif;
-            color: #334155;
-        }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
 
-        /* スマホ縦持ち画面にぴったり収まるレイアウト */
-        #app-container {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: 100dvh;
-            max-width: 440px;
-            margin: 0 auto;
-            padding: 12px;
-            justify-content: space-between;
-        }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      touch-action: none;
+    }
 
-        /* 盤面エリア（フラットでクリーンなデザイン） */
-        #board-wrapper {
-            position: relative;
-            background-color: #ffffff;
-            border: 2px solid #cbd5e1;
-            border-radius: 12px;
-            overflow: hidden;
-        }
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      padding: 12px;
+      position: relative;
+    }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+    /* 上部バー */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 10px;
+    }
 
-        /* 連鎖カットイン演出（シンプル） */
-        @keyframes chainPop {
-            0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
-            30% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
-            80% { transform: translate(-50%, -55%) scale(1.0); opacity: 1; }
-            100% { transform: translate(-50%, -70%) scale(1.0); opacity: 0; }
-        }
+    .next-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 12px;
+    }
 
-        .chain-cutin {
-            position: absolute;
-            top: 42%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 20;
-            font-weight: 800;
-            color: #1e293b;
-            background: rgba(255, 255, 255, 0.92);
-            border: 2px solid #94a3b8;
-            padding: 4px 14px;
-            border-radius: 9999px;
-            white-space: nowrap;
-            animation: chainPop 0.95s ease-out forwards;
-        }
-    </style>
+    .next-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--subtext);
+    }
+
+    #next-canvas {
+      display: block;
+    }
+
+    .settings-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .settings-btn:active {
+      background: #e5e7eb;
+    }
+
+    /* 盤面エリア */
+    .board-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    #board-canvas {
+      display: block;
+      background: var(--board-bg);
+      border-radius: 8px;
+    }
+
+    /* 連鎖表示 */
+    #chain-banner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: rgba(34, 38, 46, 0.88);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+      padding: 8px 18px;
+      border-radius: 999px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      white-space: nowrap;
+    }
+
+    #chain-banner.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* 操作ヒント */
+    .hint {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--subtext);
+      text-align: center;
+    }
+
+    /* モーダル共通 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 310px;
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal h2 {
+      margin: 0 0 16px;
+      font-size: 17px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .setting-group {
+      margin-bottom: 18px;
+    }
+
+    .setting-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--subtext);
+      margin-bottom: 8px;
+    }
+
+    .speed-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .speed-option {
+      padding: 10px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .speed-option.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 11px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .btn-primary {
+      background: var(--text);
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
+  <div id="app">
+    <div class="top-bar">
+      <div class="next-box">
+        <span class="next-label">NEXT</span>
+        <canvas id="next-canvas" width="56" height="28"></canvas>
+      </div>
 
-<div id="app-container">
-    <!-- ヘッダー情報エリア -->
-    <header class="flex items-center justify-between bg-white px-3.5 py-2 rounded-xl border border-slate-200 shrink-0">
-        <div class="flex items-center gap-2">
-            <span class="text-base font-extrabold text-slate-800 tracking-tight">PUYO PUZZLE</span>
-            <span id="level-badge" class="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md border border-slate-200">LV.1</span>
+      <button id="open-settings" class="settings-btn" aria-label="設定">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="board-wrapper">
+      <canvas id="board-canvas"></canvas>
+      <div id="chain-banner">2 連鎖!</div>
+    </div>
+
+    <div class="hint">左右スワイプ: 移動 / 下ドラッグ・フリック: 落下 / 左右タップ: 回転</div>
+  </div>
+
+  <!-- 設定モーダル -->
+  <div id="settings-modal" class="modal-backdrop">
+    <div class="modal">
+      <h2>設定</h2>
+      <div class="setting-group">
+        <div class="setting-title">落下スピード</div>
+        <div class="speed-grid">
+          <button class="speed-option" data-speed="0">手動のみ</button>
+          <button class="speed-option" data-speed="1100">ゆっくり</button>
+          <button class="speed-option active" data-speed="650">ふつう</button>
+          <button class="speed-option" data-speed="280">はやい</button>
         </div>
-        <button id="restart-header-btn" class="px-3 py-1 rounded-lg bg-slate-100 active:bg-slate-200 text-slate-600 font-bold text-xs border border-slate-200 transition">
-            リセット
-        </button>
-    </header>
+      </div>
+      <div class="modal-actions">
+        <button id="reset-btn" class="btn btn-danger">盤面をリセット</button>
+        <button id="close-settings" class="btn btn-primary">閉じる</button>
+      </div>
+    </div>
+  </div>
 
-    <!-- メインゲームエリア（盤面 ＋ サイドパネル） -->
-    <main class="flex-1 flex items-center justify-center gap-3 my-2.5 min-h-0">
-        <!-- ゲーム盤面 -->
-        <div id="board-wrapper" class="h-full aspect-[6/12] max-h-full">
-            <canvas id="game-canvas"></canvas>
-            
-            <!-- カットイン表示用コンテナ -->
-            <div id="cutin-layer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+  <!-- ゲームオーバーモーダル -->
+  <div id="gameover-modal" class="modal-backdrop">
+    <div class="modal">
+      <h2>ここまで積み上がりました</h2>
+      <div class="modal-actions">
+        <button id="retry-btn" class="btn btn-primary">もう一度組み立てる</button>
+      </div>
+    </div>
+  </div>
 
-            <!-- スタート / ゲームオーバー オーバーレイ -->
-            <div id="overlay-screen" class="absolute inset-0 bg-slate-900/75 flex flex-col items-center justify-center p-5 text-center z-30">
-                <h2 id="overlay-title" class="text-2xl font-extrabold text-white mb-2 tracking-wide">PUYO PUZZLE</h2>
-                <p id="overlay-subtitle" class="text-xs text-slate-200 mb-6 leading-relaxed">
-                    同じ色を4つ以上つなげて消そう<br>
-                    画面タッチ（フリック＆タップ）で操作
-                </p>
-                <div id="final-score-box" class="hidden bg-white/10 border border-white/20 rounded-xl px-5 py-3 mb-6 w-full">
-                    <div class="text-[10px] text-slate-300 font-bold tracking-wider">SCORE</div>
-                    <div id="final-score-val" class="text-2xl font-extrabold text-white mt-0.5">0</div>
-                    <div id="max-chain-val" class="text-xs text-slate-300 mt-1">最大連鎖: 0連鎖</div>
-                </div>
-                <button id="start-btn" class="w-full py-3 rounded-xl bg-white active:bg-slate-200 text-slate-900 font-extrabold text-sm transition">
-                    スタート
-                </button>
-            </div>
-        </div>
+  <script>
+    (() => {
+      const COLS = 6;
+      const VISIBLE_ROWS = 12;
+      const HIDDEN_ROWS = 1;
+      const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS; // 0番目が隠し段、1〜12が表示段
 
-        <!-- サイド情報パネル（NEXT、スコア） -->
-        <aside class="flex flex-col justify-between h-full w-24 sm:w-28 shrink-0">
-            <div class="flex flex-col gap-2.5">
-                <!-- NEXTぷよ表示 -->
-                <div class="bg-white border border-slate-200 rounded-xl p-2 text-center">
-                    <div class="text-[10px] font-bold text-slate-400 mb-1 tracking-wider">NEXT</div>
-                    <div class="w-12 h-22 mx-auto bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center py-1">
-                        <canvas id="next-canvas" width="48" height="84"></canvas>
-                    </div>
-                </div>
+      // シンプルな4色パレット
+      const COLORS = [
+        null,
+        { fill: "#ef4444", stroke: "#dc2626" }, // 1: 赤
+        { fill: "#3b82f6", stroke: "#2563eb" }, // 2: 青
+        { fill: "#22c55e", stroke: "#16a34a" }, // 3: 緑
+        { fill: "#eab308", stroke: "#ca8a04" }  // 4: 黄
+      ];
 
-                <!-- スコア表示 -->
-                <div class="bg-white border border-slate-200 rounded-xl p-2.5 text-center">
-                    <div class="text-[10px] font-bold text-slate-400 tracking-wider">SCORE</div>
-                    <div id="score-display" class="text-base font-extrabold text-slate-800 truncate mt-0.5">0</div>
-                </div>
+      // 回転方向ベクトル (0:上, 1:右, 2:下, 3:左)
+      const DIRS = [
+        { dx: 0, dy: -1 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 }
+      ];
 
-                <!-- ハイスコア表示 -->
-                <div class="bg-white border border-slate-200 rounded-xl p-2.5 text-center">
-                    <div class="text-[10px] font-bold text-slate-400 tracking-wider">BEST</div>
-                    <div id="best-display" class="text-xs font-bold text-slate-600 truncate mt-0.5">0</div>
-                </div>
-            </div>
+      const boardCanvas = document.getElementById("board-canvas");
+      const ctx = boardCanvas.getContext("2d");
+      const nextCanvas = document.getElementById("next-canvas");
+      const nextCtx = nextCanvas.getContext("2d");
+      const chainBanner = document.getElementById("chain-banner");
 
-            <!-- 操作ガイド（シンプル・ミニマル） -->
-            <div class="bg-white border border-slate-200 rounded-xl p-2.5 text-[10px] text-slate-500 space-y-1.5">
-                <div class="font-bold text-slate-700 border-b border-slate-100 pb-1">操作ガイド</div>
-                <div class="flex items-center gap-1.5">
-                    <span class="font-bold text-slate-700">↔</span>
-                    <span>左右スワイプ移動</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="font-bold text-slate-700">↓</span>
-                    <span>下ドラッグ高速落下</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="font-bold text-slate-700">⇊</span>
-                    <span>下フリック即落下</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="font-bold text-slate-700">↺↻</span>
-                    <span>左右タップ回転</span>
-                </div>
-            </div>
-        </aside>
-    </main>
+      const settingsModal = document.getElementById("settings-modal");
+      const gameoverModal = document.getElementById("gameover-modal");
+      const openSettingsBtn = document.getElementById("open-settings");
+      const closeSettingsBtn = document.getElementById("close-settings");
+      const resetBtn = document.getElementById("reset-btn");
+      const retryBtn = document.getElementById("retry-btn");
+      const speedButtons = document.querySelectorAll(".speed-option");
 
-    <!-- フッター（操作領域の余白・ガイドバー） -->
-    <footer class="shrink-0 text-center py-1">
-        <span class="text-[11px] text-slate-400 font-bold">画面のどこでもスワイプ・タップで操作できます</span>
-    </footer>
-</div>
+      let cellSize = 44;
+      let board = [];
+      let current = null; // { x, y, rot, main, sub }
+      let nextPair = null; // { main, sub }
 
-<script>
-/**
- * ぷよぷよ風落ち物パズルゲーム（無音・ミニマルデザイン・フリック＆タップ専用）
- * - 6列 x 12段 (+ 隠し1段 = 計13段)
- * - 画面全体のタッチ操作（左右ドラッグ移動、下ドラッグ高速落下、下素早いフリックでハードドロップ、左右タップ回転）
- */
+      let dropInterval = 650; // ms (0 = 手動のみ)
+      let dropTimer = 0;
+      let lastTime = 0;
 
-// --- 定数設定 ---
-const COLS = 6;
-const VISIBLE_ROWS = 12;
-const HIDDEN_ROWS = 1;
-const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS; // 0行目が隠し段、1〜12行目が表示段
+      // 状態: 'playing' | 'resolving' | 'paused' | 'gameover'
+      let state = "playing";
+      let chainCount = 0;
 
-// 落ち着いたミニマルな基本4色（赤・緑・青・黄）
-const PUYO_COLORS = {
-    1: { main: '#e11d48', border: '#9f1239' }, // ローズレッド
-    2: { main: '#16a34a', border: '#166534' }, // フォレストグリーン
-    3: { main: '#2563eb', border: '#1e40af' }, // ロイヤルブルー
-    4: { main: '#eab308', border: '#a16207' }  // アンバーイエロー
-};
-const NUM_COLORS = 4;
+      // 盤面サイズのレスポンシブ調整
+      function resizeCanvas() {
+        const maxH = window.innerHeight - 135;
+        const maxW = window.innerWidth - 44;
+        cellSize = Math.floor(Math.min(maxW / COLS, maxH / VISIBLE_ROWS));
+        cellSize = Math.max(32, Math.min(54, cellSize));
 
-// --- ゲーム状態管理 ---
-const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
-const nextCanvas = document.getElementById('next-canvas');
-const nextCtx = nextCanvas.getContext('2d');
+        boardCanvas.width = COLS * cellSize;
+        boardCanvas.height = VISIBLE_ROWS * cellSize;
+        render();
+      }
 
-let board = []; // TOTAL_ROWS x COLS (0: 空, 1..4: 色)
-let activePair = null; // { x, y, dir, mainColor, subColor }
-let nextPair = null;
+      function randomColor() {
+        return Math.floor(Math.random() * 4) + 1;
+      }
 
-let gameState = 'IDLE'; // 'IDLE', 'PLAYING', 'ANIMATING', 'GAMEOVER'
-let score = 0;
-let bestScore = parseInt(localStorage.getItem('puyo_minimal_best') || '0', 10);
-let maxChainInGame = 0;
-let currentChain = 0;
+      function createEmptyBoard() {
+        return Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(0));
+      }
 
-// 落下タイマー
-let dropTimer = 0;
-let dropInterval = 800; // ms
-let softDropping = false;
+      function generatePair() {
+        return { main: randomColor(), sub: randomColor() };
+      }
 
-// アニメーション・エフェクト用
-let particles = [];
-let poppingCells = [];
-let stateTimer = 0;
-let animSubState = ''; // 'FALLING', 'POPPING'
+      function initGame() {
+        board = createEmptyBoard();
+        nextPair = generatePair();
+        chainCount = 0;
+        dropTimer = 0;
+        state = "playing";
+        gameoverModal.classList.remove("open");
+        spawnPiece();
+        renderNext();
+        render();
+      }
 
-let cellSize = 40;
+      function spawnPiece() {
+        const pair = nextPair;
+        nextPair = generatePair();
+        renderNext();
 
-function resizeCanvas() {
-    const wrapper = document.getElementById('board-wrapper');
-    const rect = wrapper.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cellSize = rect.width / COLS;
-    draw();
-}
+        current = {
+          x: 2,
+          y: 1, // 表示上の最上段
+          rot: 0, // 子ぷよは上(隠し段 y=0)
+          main: pair.main,
+          sub: pair.sub
+        };
+        dropTimer = 0;
 
-window.addEventListener('resize', resizeCanvas);
+        // 出現位置(3列目上段)がすでに埋まっている場合はゲームオーバー
+        if (board[1][2] !== 0) {
+          current = null;
+          state = "gameover";
+          gameoverModal.classList.add("open");
+        }
+      }
 
-// --- ユーティリティ ---
-function randomColor() {
-    return Math.floor(Math.random() * NUM_COLORS) + 1;
-}
+      function getSubPos(x, y, rot) {
+        return {
+          x: x + DIRS[rot].dx,
+          y: y + DIRS[rot].dy
+        };
+      }
 
-function createPair() {
-    return {
-        x: 2,
-        y: 1,
-        dir: 0, // 0=上, 1=右, 2=下, 3=左
-        mainColor: randomColor(),
-        subColor: randomColor()
-    };
-}
-
-function getSubPos(x, y, dir) {
-    if (dir === 0) return { x: x, y: y - 1 };
-    if (dir === 1) return { x: x + 1, y: y };
-    if (dir === 2) return { x: x, y: y + 1 };
-    if (dir === 3) return { x: x - 1, y: y };
-    return { x, y };
-}
-
-function isValidPos(x, y) {
-    if (x < 0 || x >= COLS || y < 0 || y >= TOTAL_ROWS) return false;
-    return board[y][x] === 0;
-}
-
-function canMovePair(x, y, dir) {
-    if (!isValidPos(x, y)) return false;
-    const sub = getSubPos(x, y, dir);
-    if (!isValidPos(sub.x, sub.y)) return false;
-    return true;
-}
-
-// --- ゲーム進行ロジック ---
-function initGame() {
-    board = Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(0));
-    score = 0;
-    maxChainInGame = 0;
-    currentChain = 0;
-    particles = [];
-    poppingCells = [];
-    dropInterval = 800;
-    softDropping = false;
-
-    nextPair = createPair();
-    spawnNextPair();
-
-    updateScoreUI();
-    document.getElementById('overlay-screen').classList.add('hidden');
-    gameState = 'PLAYING';
-    dropTimer = 0;
-}
-
-function spawnNextPair() {
-    activePair = nextPair;
-    activePair.x = 2;
-    activePair.y = 1;
-    activePair.dir = 0;
-    nextPair = createPair();
-    drawNext();
-
-    if (board[1][2] !== 0) {
-        triggerGameOver();
-    }
-}
-
-function triggerGameOver() {
-    gameState = 'GAMEOVER';
-
-    if (score > bestScore) {
-        bestScore = score;
-        localStorage.setItem('puyo_minimal_best', bestScore.toString());
-        updateScoreUI();
-    }
-
-    document.getElementById('overlay-title').textContent = 'GAME OVER';
-    document.getElementById('overlay-subtitle').classList.add('hidden');
-    const scoreBox = document.getElementById('final-score-box');
-    scoreBox.classList.remove('hidden');
-    document.getElementById('final-score-val').textContent = score.toLocaleString();
-    document.getElementById('max-chain-val').textContent = `最大連鎖: ${maxChainInGame}連鎖`;
-    document.getElementById('start-btn').textContent = 'もう一度遊ぶ';
-    document.getElementById('overlay-screen').classList.remove('hidden');
-}
-
-// --- 操作アクション ---
-function moveHorizontal(dx) {
-    if (gameState !== 'PLAYING' || !activePair) return false;
-    const nx = activePair.x + dx;
-    if (canMovePair(nx, activePair.y, activePair.dir)) {
-        activePair.x = nx;
-        return true;
-    }
-    return false;
-}
-
-function rotatePair(dDir) {
-    if (gameState !== 'PLAYING' || !activePair) return false;
-    const newDir = (activePair.dir + dDir + 4) % 4;
-
-    // 通常回転
-    if (canMovePair(activePair.x, activePair.y, newDir)) {
-        activePair.dir = newDir;
-        return true;
-    }
-
-    // 壁蹴り・床蹴り補正
-    if (newDir === 1 && canMovePair(activePair.x - 1, activePair.y, newDir)) {
-        activePair.x -= 1;
-        activePair.dir = newDir;
-        return true;
-    }
-    if (newDir === 3 && canMovePair(activePair.x + 1, activePair.y, newDir)) {
-        activePair.x += 1;
-        activePair.dir = newDir;
-        return true;
-    }
-    if (newDir === 2 && canMovePair(activePair.x, activePair.y - 1, newDir)) {
-        activePair.y -= 1;
-        activePair.dir = newDir;
-        return true;
-    }
-
-    // クイックターン（左右が塞がっている狭い縦穴での上下反転）
-    const oppositeDir = (activePair.dir + 2) % 4;
-    if (canMovePair(activePair.x, activePair.y, oppositeDir)) {
-        activePair.dir = oppositeDir;
-        return true;
-    }
-
-    return false;
-}
-
-function moveDown(isManual = false) {
-    if (gameState !== 'PLAYING' || !activePair) return false;
-    const ny = activePair.y + 1;
-    if (canMovePair(activePair.x, ny, activePair.dir)) {
-        activePair.y = ny;
-        if (isManual) {
-            score += 1;
-            updateScoreUI();
+      function isValidPos(x, y, rot) {
+        const sub = getSubPos(x, y, rot);
+        const cells = [{ x, y }, sub];
+        for (const c of cells) {
+          if (c.x < 0 || c.x >= COLS || c.y < 0 || c.y >= TOTAL_ROWS) return false;
+          if (board[c.y][c.x] !== 0) return false;
         }
         return true;
-    } else {
-        lockPair();
+      }
+
+      function moveHorizontal(dx) {
+        if (state !== "playing" || !current) return false;
+        if (isValidPos(current.x + dx, current.y, current.rot)) {
+          current.x += dx;
+          render();
+          return true;
+        }
         return false;
-    }
-}
+      }
 
-// 下フリック時の即落下（ハードドロップ）
-function hardDrop() {
-    if (gameState !== 'PLAYING' || !activePair) return;
-    let droppedRows = 0;
-    while (canMovePair(activePair.x, activePair.y + 1, activePair.dir)) {
-        activePair.y++;
-        droppedRows++;
-    }
-    if (droppedRows > 0) {
-        score += droppedRows * 2;
-        updateScoreUI();
-    }
-    lockPair();
-}
+      function rotate(dir) {
+        if (state !== "playing" || !current) return;
+        const nextRot = (current.rot + dir + 4) % 4;
 
-function lockPair() {
-    const sub = getSubPos(activePair.x, activePair.y, activePair.dir);
-    if (activePair.y >= 0 && activePair.y < TOTAL_ROWS) {
-        board[activePair.y][activePair.x] = activePair.mainColor;
-    }
-    if (sub.y >= 0 && sub.y < TOTAL_ROWS) {
-        board[sub.y][sub.x] = activePair.subColor;
-    }
-    activePair = null;
-    softDropping = false;
-
-    currentChain = 0;
-    gameState = 'ANIMATING';
-    animSubState = 'FALLING';
-    stateTimer = 0;
-}
-
-function applyGravityStep() {
-    let moved = false;
-    for (let c = 0; c < COLS; c++) {
-        for (let r = TOTAL_ROWS - 2; r >= 0; r--) {
-            if (board[r][c] !== 0 && board[r + 1][c] === 0) {
-                board[r + 1][c] = board[r][c];
-                board[r][c] = 0;
-                moved = true;
-            }
+        // 通常回転
+        if (isValidPos(current.x, current.y, nextRot)) {
+          current.rot = nextRot;
+          render();
+          return;
         }
-    }
-    return moved;
-}
+        // 壁蹴り・床蹴り
+        const kicks = [
+          { dx: -1, dy: 0 },
+          { dx: 1, dy: 0 },
+          { dx: 0, dy: -1 }
+        ];
+        for (const k of kicks) {
+          if (isValidPos(current.x + k.dx, current.y + k.dy, nextRot)) {
+            current.x += k.dx;
+            current.y += k.dy;
+            current.rot = nextRot;
+            render();
+            return;
+          }
+        }
+      }
 
-function findMatches() {
-    const visited = Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(false));
-    const matches = [];
-    let groupCount = 0;
-    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      function softDrop() {
+        if (state !== "playing" || !current) return false;
+        if (isValidPos(current.x, current.y + 1, current.rot)) {
+          current.y += 1;
+          dropTimer = 0;
+          render();
+          return true;
+        } else {
+          lockPiece();
+          return false;
+        }
+      }
 
-    for (let r = 1; r < TOTAL_ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const color = board[r][c];
-            if (color === 0 || visited[r][c]) continue;
+      function hardDrop() {
+        if (state !== "playing" || !current) return;
+        while (isValidPos(current.x, current.y + 1, current.rot)) {
+          current.y += 1;
+        }
+        render();
+        lockPiece();
+      }
+
+      function lockPiece() {
+        if (!current) return;
+        const sub = getSubPos(current.x, current.y, current.rot);
+        board[current.y][current.x] = current.main;
+        if (sub.y >= 0 && sub.y < TOTAL_ROWS) {
+          board[sub.y][sub.x] = current.sub;
+        }
+        current = null;
+        resolveBoard();
+      }
+
+      // 重力落下処理（ちぎり落下）
+      function applyGravity() {
+        let moved = false;
+        for (let x = 0; x < COLS; x++) {
+          let writeY = TOTAL_ROWS - 1;
+          for (let y = TOTAL_ROWS - 1; y >= 0; y--) {
+            if (board[y][x] !== 0) {
+              if (y !== writeY) {
+                board[writeY][x] = board[y][x];
+                board[y][x] = 0;
+                moved = true;
+              }
+              writeY--;
+            }
+          }
+        }
+        return moved;
+      }
+
+      // 4つ以上連結しているぷよを探索
+      function findMatches() {
+        const visited = Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(false));
+        const toClear = [];
+
+        for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
+          for (let x = 0; x < COLS; x++) {
+            const color = board[y][x];
+            if (color === 0 || visited[y][x]) continue;
 
             const group = [];
-            const queue = [{ r, c }];
-            visited[r][c] = true;
+            const queue = [{ x, y }];
+            visited[y][x] = true;
 
             while (queue.length > 0) {
-                const curr = queue.shift();
-                group.push({ r: curr.r, c: curr.c, color });
+              const p = queue.shift();
+              group.push(p);
 
-                for (const [dr, dc] of dirs) {
-                    const nr = curr.r + dr;
-                    const nc = curr.c + dc;
-                    if (nr >= 1 && nr < TOTAL_ROWS && nc >= 0 && nc < COLS && !visited[nr][nc]) {
-                        if (board[nr][nc] === color) {
-                            visited[nr][nc] = true;
-                            queue.push({ r: nr, c: nc });
-                        }
-                    }
+              for (const d of DIRS) {
+                const nx = p.x + d.dx;
+                const ny = p.y + d.dy;
+                if (
+                  nx >= 0 && nx < COLS &&
+                  ny >= HIDDEN_ROWS && ny < TOTAL_ROWS &&
+                  !visited[ny][nx] &&
+                  board[ny][nx] === color
+                ) {
+                  visited[ny][nx] = true;
+                  queue.push({ x: nx, y: ny });
                 }
+              }
             }
 
             if (group.length >= 4) {
-                matches.push(...group);
-                groupCount++;
+              toClear.push(...group);
             }
+          }
         }
-    }
+        return toClear;
+      }
 
-    return { matches, groupCount };
-}
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-function showChainCutin(chain) {
-    const layer = document.getElementById('cutin-layer');
-    const el = document.createElement('div');
-    el.className = 'chain-cutin';
-    el.style.fontSize = chain >= 5 ? '1.35rem' : '1.15rem';
-    el.textContent = `${chain}連鎖`;
-    
-    layer.appendChild(el);
-    setTimeout(() => {
-        el.remove();
-    }, 1000);
-}
+      function showChain(count) {
+        if (count < 2) return;
+        chainBanner.textContent = `${count} 連鎖!`;
+        chainBanner.classList.add("show");
+        setTimeout(() => {
+          chainBanner.classList.remove("show");
+        }, 750);
+      }
 
-function spawnParticles(r, c, colorId) {
-    const colorHex = PUYO_COLORS[colorId].main;
-    const cx = (c + 0.5) * cellSize;
-    const cy = ((r - HIDDEN_ROWS) + 0.5) * cellSize;
+      // 連鎖解決ループ
+      async function resolveBoard() {
+        state = "resolving";
+        chainCount = 0;
 
-    for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI * 2 * i) / 6 + Math.random() * 0.3;
-        const speed = 1.2 + Math.random() * 2.2;
-        particles.push({
-            x: cx,
-            y: cy,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed - 0.8,
-            radius: 2.5 + Math.random() * 2.5,
-            color: colorHex,
-            life: 1.0
-        });
-    }
-}
-
-function updateScoreUI() {
-    document.getElementById('score-display').textContent = score.toLocaleString();
-    document.getElementById('best-display').textContent = bestScore.toLocaleString();
-    
-    const level = Math.floor(score / 3000) + 1;
-    document.getElementById('level-badge').textContent = `LV.${level}`;
-    dropInterval = Math.max(180, 800 - (level - 1) * 65);
-}
-
-// --- メインループ ---
-let lastTime = 0;
-
-function update(dt) {
-    for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.12;
-        p.life -= dt / 420;
-        if (p.life <= 0) {
-            particles.splice(i, 1);
-        }
-    }
-
-    if (gameState === 'PLAYING') {
-        dropTimer += dt;
-        const currentInterval = softDropping ? 50 : dropInterval;
-        if (dropTimer >= currentInterval) {
-            dropTimer = 0;
-            moveDown(softDropping);
-        }
-    } else if (gameState === 'ANIMATING') {
-        stateTimer += dt;
-
-        if (animSubState === 'FALLING') {
-            if (stateTimer >= 60) {
-                stateTimer = 0;
-                const moved = applyGravityStep();
-                if (!moved) {
-                    const { matches, groupCount } = findMatches();
-                    if (matches.length > 0) {
-                        currentChain++;
-                        if (currentChain > maxChainInGame) {
-                            maxChainInGame = currentChain;
-                        }
-                        poppingCells = matches;
-                        animSubState = 'POPPING';
-                        stateTimer = 0;
-
-                        const chainBonus = Math.pow(2, currentChain - 1) * 10;
-                        score += matches.length * chainBonus * groupCount;
-                        updateScoreUI();
-
-                        if (currentChain >= 2) {
-                            showChainCutin(currentChain);
-                        }
-                    } else {
-                        gameState = 'PLAYING';
-                        spawnNextPair();
-                    }
-                }
-            }
-        } else if (animSubState === 'POPPING') {
-            if (stateTimer >= 340) {
-                for (const cell of poppingCells) {
-                    spawnParticles(cell.r, cell.c, cell.color);
-                    board[cell.r][cell.c] = 0;
-                }
-                poppingCells = [];
-                animSubState = 'FALLING';
-                stateTimer = 0;
-            }
-        }
-    }
-}
-
-// --- 描画処理（フラット＆ミニマルなぷよデザイン） ---
-function drawPuyo(context, x, y, size, colorId, connections = { up: false, down: false, left: false, right: false }, alpha = 1.0) {
-    const c = PUYO_COLORS[colorId];
-    if (!c) return;
-
-    context.save();
-    context.globalAlpha = alpha;
-
-    const cx = x + size / 2;
-    const cy = y + size / 2;
-    const r = size * 0.41;
-
-    context.fillStyle = c.main;
-
-    // 同色隣接の連結ブリッジ
-    if (connections.up) {
-        context.fillRect(cx - r * 0.8, y, r * 1.6, size * 0.5);
-    }
-    if (connections.down) {
-        context.fillRect(cx - r * 0.8, cy, r * 1.6, size * 0.5);
-    }
-    if (connections.left) {
-        context.fillRect(x, cy - r * 0.8, size * 0.5, r * 1.6);
-    }
-    if (connections.right) {
-        context.fillRect(cx, cy - r * 0.8, size * 0.5, r * 1.6);
-    }
-
-    // ぷよ本体（クリーンな円形）
-    context.beginPath();
-    context.arc(cx, cy, r, 0, Math.PI * 2);
-    context.fill();
-
-    // シンプルな目
-    const eyeOffsetX = r * 0.32;
-    const eyeOffsetY = -r * 0.05;
-    const eyeR = r * 0.21;
-
-    context.fillStyle = '#ffffff';
-    context.beginPath();
-    context.arc(cx - eyeOffsetX, cy + eyeOffsetY, eyeR, 0, Math.PI * 2);
-    context.arc(cx + eyeOffsetX, cy + eyeOffsetY, eyeR, 0, Math.PI * 2);
-    context.fill();
-
-    context.fillStyle = '#0f172a';
-    context.beginPath();
-    context.arc(cx - eyeOffsetX, cy + eyeOffsetY, eyeR * 0.52, 0, Math.PI * 2);
-    context.arc(cx + eyeOffsetX, cy + eyeOffsetY, eyeR * 0.52, 0, Math.PI * 2);
-    context.fill();
-
-    context.restore();
-}
-
-function draw() {
-    const width = canvas.width / (window.devicePixelRatio || 1);
-    const height = canvas.height / (window.devicePixelRatio || 1);
-
-    ctx.clearRect(0, 0, width, height);
-
-    // 極薄のグリッド線
-    ctx.strokeStyle = '#f1f5f9';
-    ctx.lineWidth = 1;
-    for (let c = 1; c < COLS; c++) {
-        ctx.beginPath();
-        ctx.moveTo(c * cellSize, 0);
-        ctx.lineTo(c * cellSize, height);
-        ctx.stroke();
-    }
-    for (let r = 1; r < VISIBLE_ROWS; r++) {
-        ctx.beginPath();
-        ctx.moveTo(0, r * cellSize);
-        ctx.lineTo(width, r * cellSize);
-        ctx.stroke();
-    }
-
-    // 窒息点（左から3列目の最上段：col=2, row=1）に控えめな「×」マーク
-    const dangerX = 2 * cellSize + cellSize / 2;
-    const dangerY = 0 * cellSize + cellSize / 2;
-    ctx.save();
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 2.5;
-    ctx.lineCap = 'round';
-    const crossR = cellSize * 0.22;
-    ctx.beginPath();
-    ctx.moveTo(dangerX - crossR, dangerY - crossR);
-    ctx.lineTo(dangerX + crossR, dangerY + crossR);
-    ctx.moveTo(dangerX + crossR, dangerY - crossR);
-    ctx.lineTo(dangerX - crossR, dangerY + crossR);
-    ctx.stroke();
-    ctx.restore();
-
-    const popSet = new Set(poppingCells.map(p => `${p.r},${p.c}`));
-    const isBlinkHidden = animSubState === 'POPPING' && Math.floor(stateTimer / 65) % 2 === 1;
-
-    // 盤面の固定ぷよ描画
-    for (let r = HIDDEN_ROWS; r < TOTAL_ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const color = board[r][c];
-            if (color === 0) continue;
-
-            if (popSet.has(`${r},${c}`) && isBlinkHidden) {
-                continue;
-            }
-
-            const connections = {
-                up: r > HIDDEN_ROWS && board[r - 1][c] === color,
-                down: r < TOTAL_ROWS - 1 && board[r + 1][c] === color,
-                left: c > 0 && board[r][c - 1] === color,
-                right: c < COLS - 1 && board[r][c + 1] === color
-            };
-
-            drawPuyo(ctx, c * cellSize, (r - HIDDEN_ROWS) * cellSize, cellSize, color, connections);
-        }
-    }
-
-    // 操作中のペア描画 & ゴースト描画
-    if (gameState === 'PLAYING' && activePair) {
-        const sub = getSubPos(activePair.x, activePair.y, activePair.dir);
-
-        // ゴースト（落下予測）
-        let ghostY = activePair.y;
-        while (canMovePair(activePair.x, ghostY + 1, activePair.dir)) {
-            ghostY++;
-        }
-        if (ghostY > activePair.y) {
-            const ghostSub = getSubPos(activePair.x, ghostY, activePair.dir);
-            if (ghostY >= HIDDEN_ROWS) {
-                drawPuyo(ctx, activePair.x * cellSize, (ghostY - HIDDEN_ROWS) * cellSize, cellSize, activePair.mainColor, {}, 0.2);
-            }
-            if (ghostSub.y >= HIDDEN_ROWS) {
-                drawPuyo(ctx, ghostSub.x * cellSize, (ghostSub.y - HIDDEN_ROWS) * cellSize, cellSize, activePair.subColor, {}, 0.2);
-            }
+        if (applyGravity()) {
+          render();
+          await sleep(180);
         }
 
-        // 軸ぷよ
-        if (activePair.y >= HIDDEN_ROWS) {
-            drawPuyo(ctx, activePair.x * cellSize, (activePair.y - HIDDEN_ROWS) * cellSize, cellSize, activePair.mainColor);
-            // 軸ぷよ目印の極細リング
-            ctx.save();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc((activePair.x + 0.5) * cellSize, (activePair.y - HIDDEN_ROWS + 0.5) * cellSize, cellSize * 0.43, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
+        while (true) {
+          const matches = findMatches();
+          if (matches.length === 0) break;
+
+          chainCount++;
+          showChain(chainCount);
+
+          for (const m of matches) {
+            board[m.y][m.x] = 0;
+          }
+          render();
+          await sleep(260);
+
+          if (applyGravity()) {
+            render();
+            await sleep(200);
+          }
         }
-        // 子ぷよ
-        if (sub.y >= HIDDEN_ROWS) {
-            drawPuyo(ctx, sub.x * cellSize, (sub.y - HIDDEN_ROWS) * cellSize, cellSize, activePair.subColor);
-        }
-    }
 
-    // パーティクル描画
-    for (const p of particles) {
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, p.life);
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-}
-
-function drawNext() {
-    nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-    if (!nextPair) return;
-    const size = 34;
-    const offsetX = (nextCanvas.width - size) / 2;
-    drawPuyo(nextCtx, offsetX, 6, size, nextPair.subColor);
-    drawPuyo(nextCtx, offsetX, 44, size, nextPair.mainColor);
-}
-
-function gameLoop(timestamp) {
-    if (!lastTime) lastTime = timestamp;
-    const dt = Math.min(timestamp - lastTime, 100);
-    lastTime = timestamp;
-
-    update(dt);
-    draw();
-
-    requestAnimationFrame(gameLoop);
-}
-
-// --- フリック＆タップ専用タッチ操作（画面全体で快適に反応） ---
-const appContainer = document.getElementById('app-container');
-let touchStartX = 0;
-let touchStartY = 0;
-let touchLastX = 0;
-let touchLastY = 0;
-let touchStartTime = 0;
-let touchMovedHorizontal = false;
-let touchMovedVertical = false;
-let activeTouchId = null;
-
-appContainer.addEventListener('touchstart', (e) => {
-    // ボタン上のタップはそのままボタン処理へ譲る
-    if (e.target.closest('button')) return;
-    if (gameState !== 'PLAYING') return;
-
-    const t = e.changedTouches[0];
-    activeTouchId = t.identifier;
-    touchStartX = touchLastX = t.clientX;
-    touchStartY = touchLastY = t.clientY;
-    touchStartTime = Date.now();
-    touchMovedHorizontal = false;
-    touchMovedVertical = false;
-    softDropping = false;
-}, { passive: false });
-
-appContainer.addEventListener('touchmove', (e) => {
-    if (gameState !== 'PLAYING' || activeTouchId === null) return;
-    e.preventDefault();
-
-    let t = null;
-    for (let i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === activeTouchId) {
-            t = e.changedTouches[i];
-            break;
-        }
-    }
-    if (!t) return;
-
-    const dx = t.clientX - touchLastX;
-    const dy = t.clientY - touchLastY;
-    const totalDy = t.clientY - touchStartY;
-
-    // 1マスの幅に応じた感度設定（指の移動にスムーズ追従）
-    const stepX = Math.max(24, cellSize * 0.82);
-    const stepY = Math.max(22, cellSize * 0.72);
-
-    // 左右ドラッグで1マスずつ連続移動
-    if (Math.abs(dx) >= stepX) {
-        const steps = Math.trunc(dx / stepX);
-        const dir = steps > 0 ? 1 : -1;
-        for (let i = 0; i < Math.abs(steps); i++) {
-            moveHorizontal(dir);
-        }
-        touchLastX += steps * stepX;
-        touchMovedHorizontal = true;
-    }
-
-    // 下ドラッグでソフトドロップ（連続高速落下）
-    if (dy >= stepY) {
-        const steps = Math.trunc(dy / stepY);
-        for (let i = 0; i < steps; i++) {
-            moveDown(true);
-        }
-        touchLastY += steps * stepY;
-        touchMovedVertical = true;
-        softDropping = true;
-    } else if (totalDy > stepY * 1.2) {
-        softDropping = true;
-    }
-}, { passive: false });
-
-appContainer.addEventListener('touchend', (e) => {
-    if (activeTouchId === null) return;
-
-    let t = null;
-    for (let i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === activeTouchId) {
-            t = e.changedTouches[i];
-            break;
-        }
-    }
-    if (!t) return;
-
-    activeTouchId = null;
-    softDropping = false;
-
-    if (gameState !== 'PLAYING') return;
-
-    const elapsed = Date.now() - touchStartTime;
-    const totalDx = t.clientX - touchStartX;
-    const totalDy = t.clientY - touchStartY;
-    const dist = Math.hypot(totalDx, totalDy);
-
-    // 1. 素早い下フリック判定 -> 即落下（ハードドロップ）
-    if (!touchMovedHorizontal && totalDy > 55 && elapsed < 220 && Math.abs(totalDy) > Math.abs(totalDx) * 1.5) {
-        hardDrop();
-        return;
-    }
-
-    // 2. ほとんど指が動いていない短時間タッチ -> 左右タップ回転
-    if (!touchMovedHorizontal && !touchMovedVertical && dist < 18 && elapsed < 260) {
-        const screenMidX = window.innerWidth / 2;
-        if (touchStartX < screenMidX) {
-            rotatePair(-1); // 画面左半分タップ：左回転
+        // 設定画面が開かれていなければ次のぷよを出現
+        if (settingsModal.classList.contains("open")) {
+          state = "paused";
         } else {
-            rotatePair(1);  // 画面右半分タップ：右回転
+          state = "playing";
+          spawnPiece();
+          render();
         }
-    }
-}, { passive: false });
+      }
 
-appContainer.addEventListener('touchcancel', () => {
-    activeTouchId = null;
-    softDropping = false;
-});
+      // 描画処理
+      function drawPuyo(context, px, py, size, colorId, neighbors = null, alpha = 1) {
+        if (!colorId) return;
+        const c = COLORS[colorId];
+        const r = size * 0.42;
+        const cx = px + size / 2;
+        const cy = py + size / 2;
 
-// --- PCデバッグ用キーボード操作サポート ---
-window.addEventListener('keydown', (e) => {
-    if (gameState !== 'PLAYING') return;
-    switch (e.key) {
-        case 'ArrowLeft':
-        case 'a':
-        case 'A':
-            e.preventDefault();
-            moveHorizontal(-1);
-            break;
-        case 'ArrowRight':
-        case 'd':
-        case 'D':
-            e.preventDefault();
-            moveHorizontal(1);
-            break;
-        case 'ArrowDown':
-        case 's':
-        case 'S':
-            e.preventDefault();
-            softDropping = true;
-            moveDown(true);
-            break;
-        case ' ':
-            e.preventDefault();
-            hardDrop();
-            break;
-        case 'z':
-        case 'Z':
-            e.preventDefault();
-            rotatePair(-1);
-            break;
-        case 'x':
-        case 'X':
-        case 'ArrowUp':
-        case 'w':
-        case 'W':
-            e.preventDefault();
-            rotatePair(1);
-            break;
-    }
-});
+        context.save();
+        context.globalAlpha = alpha;
+        context.fillStyle = c.fill;
+        context.strokeStyle = c.stroke;
+        context.lineWidth = 2;
 
-window.addEventListener('keyup', (e) => {
-    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-        softDropping = false;
-    }
-});
+        // 同色連結ブリッジ
+        if (neighbors) {
+          const bw = r * 1.15;
+          if (neighbors.up) context.fillRect(cx - bw / 2, py, bw, size / 2);
+          if (neighbors.down) context.fillRect(cx - bw / 2, cy, bw, size / 2);
+          if (neighbors.left) context.fillRect(px, cy - bw / 2, size / 2, bw);
+          if (neighbors.right) context.fillRect(cx, cy - bw / 2, size / 2, bw);
+        }
 
-// --- UIボタンイベント ---
-document.getElementById('start-btn').addEventListener('click', () => {
-    initGame();
-});
+        // 本体
+        context.beginPath();
+        context.arc(cx, cy, r, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
 
-document.getElementById('restart-header-btn').addEventListener('click', () => {
-    initGame();
-});
+        // ハイライト（シンプルに1点）
+        context.fillStyle = "rgba(255, 255, 255, 0.35)";
+        context.beginPath();
+        context.arc(cx - r * 0.32, cy - r * 0.32, r * 0.22, 0, Math.PI * 2);
+        context.fill();
 
-// --- 初期化実行 ---
-window.onload = function () {
-    updateScoreUI();
-    resizeCanvas();
-    requestAnimationFrame(gameLoop);
-};
-</script>
+        context.restore();
+      }
+
+      function renderNext() {
+        nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+        if (!nextPair) return;
+        drawPuyo(nextCtx, 0, 0, 28, nextPair.main);
+        drawPuyo(nextCtx, 28, 0, 28, nextPair.sub);
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+
+        // グリッド線
+        ctx.strokeStyle = "#e0e3e8";
+        ctx.lineWidth = 1;
+        for (let x = 1; x < COLS; x++) {
+          ctx.beginPath();
+          ctx.moveTo(x * cellSize, 0);
+          ctx.lineTo(x * cellSize, boardCanvas.height);
+          ctx.stroke();
+        }
+        for (let y = 1; y < VISIBLE_ROWS; y++) {
+          ctx.beginPath();
+          ctx.moveTo(0, y * cellSize);
+          ctx.lineTo(boardCanvas.width, y * cellSize);
+          ctx.stroke();
+        }
+
+        // 窒息ライン（3列目最上段の×印）
+        const deathX = 2 * cellSize + cellSize / 2;
+        const deathY = cellSize / 2;
+        ctx.strokeStyle = "rgba(220, 38, 38, 0.35)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(deathX - 7, deathY - 7);
+        ctx.lineTo(deathX + 7, deathY + 7);
+        ctx.moveTo(deathX + 7, deathY - 7);
+        ctx.lineTo(deathX - 7, deathY + 7);
+        ctx.stroke();
+
+        // 固定済みぷよ描画
+        for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
+          for (let x = 0; x < COLS; x++) {
+            const color = board[y][x];
+            if (!color) continue;
+            const neighbors = {
+              up: y > HIDDEN_ROWS && board[y - 1][x] === color,
+              down: y < TOTAL_ROWS - 1 && board[y + 1][x] === color,
+              left: x > 0 && board[y][x - 1] === color,
+              right: x < COLS - 1 && board[y][x + 1] === color
+            };
+            drawPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, color, neighbors);
+          }
+        }
+
+        // 操作中ぷよ & ゴースト描画
+        if (current && (state === "playing" || state === "paused")) {
+          // ゴースト位置計算
+          let ghostY = current.y;
+          while (isValidPos(current.x, ghostY + 1, current.rot)) {
+            ghostY++;
+          }
+          const ghostSub = getSubPos(current.x, ghostY, current.rot);
+          if (ghostY >= HIDDEN_ROWS) {
+            drawPuyo(ctx, current.x * cellSize, (ghostY - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.2);
+          }
+          if (ghostSub.y >= HIDDEN_ROWS) {
+            drawPuyo(ctx, ghostSub.x * cellSize, (ghostSub.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.2);
+          }
+
+          // 本体描画
+          const sub = getSubPos(current.x, current.y, current.rot);
+          if (current.y >= HIDDEN_ROWS) {
+            drawPuyo(ctx, current.x * cellSize, (current.y - HIDDEN_ROWS) * cellSize, cellSize, current.main);
+          }
+          if (sub.y >= HIDDEN_ROWS) {
+            drawPuyo(ctx, sub.x * cellSize, (sub.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub);
+          }
+        }
+      }
+
+      // メインループ
+      function gameLoop(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        const dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        if (state === "playing" && dropInterval > 0) {
+          dropTimer += dt;
+          if (dropTimer >= dropInterval) {
+            dropTimer = 0;
+            softDrop();
+          }
+        }
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      // フリック・ドラッグ・タップ操作（画面全体）
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let lastMoveX = 0;
+      let lastMoveY = 0;
+      let touchStartTime = 0;
+      let hasMoved = false;
+
+      const appEl = document.getElementById("app");
+
+      appEl.addEventListener("pointerdown", (e) => {
+        if (e.target.closest("button") || settingsModal.classList.contains("open") || gameoverModal.classList.contains("open")) {
+          return;
+        }
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+        lastMoveX = e.clientX;
+        lastMoveY = e.clientY;
+        touchStartTime = performance.now();
+        hasMoved = false;
+      });
+
+      appEl.addEventListener("pointermove", (e) => {
+        if (touchStartTime === 0 || state !== "playing") return;
+
+        const dx = e.clientX - lastMoveX;
+        const dy = e.clientY - lastMoveY;
+        const stepX = cellSize * 0.65;
+        const stepY = cellSize * 0.65;
+
+        if (Math.abs(dx) >= stepX) {
+          const dir = dx > 0 ? 1 : -1;
+          moveHorizontal(dir);
+          lastMoveX = e.clientX;
+          hasMoved = true;
+        }
+
+        if (dy >= stepY) {
+          softDrop();
+          lastMoveY = e.clientY;
+          hasMoved = true;
+        }
+      });
+
+      appEl.addEventListener("pointerup", (e) => {
+        if (touchStartTime === 0) return;
+        const totalDx = e.clientX - touchStartX;
+        const totalDy = e.clientY - touchStartY;
+        const elapsed = performance.now() - touchStartTime;
+        touchStartTime = 0;
+
+        if (state !== "playing") return;
+
+        // 素早い下フリック -> ハードドロップ（即落下）
+        if (totalDy > 45 && Math.abs(totalDy) > Math.abs(totalDx) * 1.5 && elapsed < 260) {
+          hardDrop();
+          return;
+        }
+
+        // ほとんど動かずに離した場合はタップ判定（左右半分で回転）
+        if (!hasMoved && Math.abs(totalDx) < 12 && Math.abs(totalDy) < 12) {
+          if (e.clientX < window.innerWidth / 2) {
+            rotate(-1); // 左回転
+          } else {
+            rotate(1);  // 右回転
+          }
+        }
+      });
+
+      // PCキーボード操作も補助的に対応
+      window.addEventListener("keydown", (e) => {
+        if (state !== "playing") return;
+        if (e.key === "ArrowLeft") moveHorizontal(-1);
+        else if (e.key === "ArrowRight") moveHorizontal(1);
+        else if (e.key === "ArrowDown") softDrop();
+        else if (e.key === "ArrowUp") hardDrop();
+        else if (e.key === "z" || e.key === "Z") rotate(-1);
+        else if (e.key === "x" || e.key === "X") rotate(1);
+      });
+
+      // 設定モーダル制御
+      openSettingsBtn.addEventListener("click", () => {
+        if (state === "playing") state = "paused";
+        settingsModal.classList.add("open");
+      });
+
+      closeSettingsBtn.addEventListener("click", () => {
+        settingsModal.classList.remove("open");
+        if (state === "paused") {
+          state = "playing";
+          if (!current) spawnPiece();
+          render();
+        }
+      });
+
+      speedButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          speedButtons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          dropInterval = Number(btn.dataset.speed);
+          dropTimer = 0;
+        });
+      });
+
+      resetBtn.addEventListener("click", () => {
+        settingsModal.classList.remove("open");
+        initGame();
+      });
+
+      retryBtn.addEventListener("click", () => {
+        initGame();
+      });
+
+      window.addEventListener("resize", resizeCanvas);
+
+      // 起動
+      resizeCanvas();
+      initGame();
+      requestAnimationFrame(gameLoop);
+    })();
+  </script>
 </body>
 </html>
