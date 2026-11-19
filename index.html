@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Puyo Practice</title>
+  <title>ぷよぷよ</title>
   <style>
     :root {
       --bg: #f4f5f7;
@@ -35,6 +35,49 @@
       touch-action: none;
     }
 
+    /* スタート画面 */
+    #title-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      z-index: 60;
+      padding: 24px;
+    }
+
+    #title-screen.hidden {
+      display: none;
+    }
+
+    .title-logo {
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .start-btn {
+      padding: 14px 44px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--text);
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .start-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* ゲーム画面 */
     #app {
       display: flex;
       flex-direction: column;
@@ -42,18 +85,18 @@
       justify-content: center;
       width: 100%;
       height: 100%;
-      padding: 12px;
+      padding: 64px 12px 16px;
       position: relative;
     }
 
     /* 右上固定の設定ボタン */
     .settings-btn {
       position: fixed;
-      top: 14px;
-      right: 14px;
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
+      top: 12px;
+      right: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--text);
@@ -70,7 +113,7 @@
       background: #e5e7eb;
     }
 
-    /* メインプレイエリア（盤面中央配置＋右側に本家風NEXT） */
+    /* 盤面とNEXTを並べるエリア（設定ボタンと被らないよう上部に余白） */
     .play-stage {
       position: relative;
       display: flex;
@@ -84,8 +127,8 @@
       align-items: center;
       justify-content: center;
       background: var(--surface);
-      padding: 8px;
-      border-radius: 14px;
+      padding: 6px;
+      border-radius: 12px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
     }
@@ -96,21 +139,20 @@
       border-radius: 8px;
     }
 
-    /* 本家ぷよぷよ風 縦型ネクストウィンドウ（盤面の右上横に配置） */
+    /* 盤面の右横（設定ボタンの下）に配置するNEXT */
     .next-column {
-      position: absolute;
-      left: 100%;
-      top: 4px;
       margin-left: 8px;
+      margin-top: 2px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 8px 6px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      flex-shrink: 0;
     }
 
     .next-label {
@@ -133,9 +175,9 @@
       transform: translate(-50%, -50%) scale(0.8);
       background: rgba(34, 38, 46, 0.88);
       color: #fff;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 800;
-      padding: 8px 18px;
+      padding: 7px 16px;
       border-radius: 999px;
       pointer-events: none;
       opacity: 0;
@@ -148,9 +190,8 @@
       transform: translate(-50%, -50%) scale(1);
     }
 
-    /* 操作ヒント */
     .hint {
-      margin-top: 12px;
+      margin-top: 10px;
       font-size: 11px;
       color: var(--subtext);
       text-align: center;
@@ -258,6 +299,13 @@
   </style>
 </head>
 <body>
+  <!-- タイトル画面 -->
+  <div id="title-screen">
+    <h1 class="title-logo">ぷよぷよ</h1>
+    <button id="start-btn" class="start-btn">スタート</button>
+  </div>
+
+  <!-- 設定ボタン -->
   <button id="open-settings" class="settings-btn" aria-label="設定">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"></circle>
@@ -272,10 +320,9 @@
         <div id="chain-banner">2 連鎖!</div>
       </div>
 
-      <!-- 本家風 縦2連のNEXT & NEXT2 -->
       <div class="next-column">
         <span class="next-label">NEXT</span>
-        <canvas id="next-canvas" width="34" height="128"></canvas>
+        <canvas id="next-canvas" width="32" height="120"></canvas>
       </div>
     </div>
 
@@ -336,25 +383,26 @@
       const COLS = 6;
       const VISIBLE_ROWS = 12;
       const HIDDEN_ROWS = 1;
-      const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS; // 0: 隠し段(13段目), 1〜12: 表示段
+      const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS;
 
-      // 落ち着いたフラットカラー（最大5色）
       const COLORS = [
         null,
-        { fill: "#ef4444", stroke: "#dc2626" }, // 1: 赤
-        { fill: "#3b82f6", stroke: "#2563eb" }, // 2: 青
-        { fill: "#22c55e", stroke: "#16a34a" }, // 3: 緑
-        { fill: "#eab308", stroke: "#ca8a04" }, // 4: 黄
-        { fill: "#a855f7", stroke: "#9333ea" }  // 5: 紫
+        { fill: "#ef4444", stroke: "#dc2626" },
+        { fill: "#3b82f6", stroke: "#2563eb" },
+        { fill: "#22c55e", stroke: "#16a34a" },
+        { fill: "#eab308", stroke: "#ca8a04" },
+        { fill: "#a855f7", stroke: "#9333ea" }
       ];
 
-      // 回転方向ベクトル (0:上, 1:右, 2:下, 3:左)
       const DIRS = [
         { dx: 0, dy: -1 },
         { dx: 1, dy: 0 },
         { dx: 0, dy: 1 },
         { dx: -1, dy: 0 }
       ];
+
+      const titleScreen = document.getElementById("title-screen");
+      const startBtn = document.getElementById("start-btn");
 
       const boardCanvas = document.getElementById("board-canvas");
       const ctx = boardCanvas.getContext("2d");
@@ -369,25 +417,25 @@
       const resetBtn = document.getElementById("reset-btn");
       const retryBtn = document.getElementById("retry-btn");
 
-      let cellSize = 42;
+      let cellSize = 36;
       let board = [];
-      let current = null; // { x, y, rot, main, sub }
-      let nextQueue = []; // [NEXT, NEXT2]
+      let current = null;
+      let nextQueue = [];
 
-      // 設定パラメータ
-      let dropInterval = 650; // ms (0 = 手動のみ)
-      let colorCount = 4;     // 3〜5色
+      let dropInterval = 650;
+      let colorCount = 4;
       let showGhost = true;
 
       let gravityTimerId = null;
-      let state = "playing"; // 'playing' | 'resolving' | 'paused' | 'gameover'
+      // 'title' | 'playing' | 'resolving' | 'paused' | 'gameover'
+      let state = "title";
 
-      // 盤面サイズのレスポンシブ調整（右側のNEXT枠の余白も考慮して中央配置）
+      // 盤面サイズを少し控えめにして、NEXT枠と右上ボタンの余白をしっかり確保
       function resizeCanvas() {
-        const maxH = window.innerHeight - 105;
-        const maxW = window.innerWidth - 115; // NEXT枠ぶんを確保
+        const maxH = window.innerHeight - 115;
+        const maxW = window.innerWidth - 110;
         cellSize = Math.floor(Math.min(maxW / COLS, maxH / VISIBLE_ROWS));
-        cellSize = Math.max(30, Math.min(52, cellSize));
+        cellSize = Math.max(26, Math.min(44, cellSize));
 
         boardCanvas.width = COLS * cellSize;
         boardCanvas.height = VISIBLE_ROWS * cellSize;
@@ -406,28 +454,32 @@
         return { main: randomColor(), sub: randomColor() };
       }
 
-      // 確実な自動落下タイマー管理
-      function restartGravityTimer() {
+      function stopGravityTimer() {
         if (gravityTimerId !== null) {
           clearInterval(gravityTimerId);
           gravityTimerId = null;
         }
+      }
+
+      function startGravityTimer() {
+        stopGravityTimer();
         if (dropInterval > 0) {
           gravityTimerId = setInterval(() => {
             if (state === "playing" && current) {
-              softDrop();
+              stepGravity();
             }
           }, dropInterval);
         }
       }
 
       function initGame() {
+        stopGravityTimer();
         board = createEmptyBoard();
         nextQueue = [generatePair(), generatePair()];
-        state = "playing";
         gameoverModal.classList.remove("open");
+        state = "playing";
         spawnPiece();
-        restartGravityTimer();
+        startGravityTimer();
         render();
       }
 
@@ -436,7 +488,6 @@
         nextQueue.push(generatePair());
         renderNext();
 
-        // 出現位置：3列目(x=2)の1段目(y=1)、子ぷよは上の隠し段(y=0)
         current = {
           x: 2,
           y: 1,
@@ -445,9 +496,9 @@
           sub: pair.sub
         };
 
-        // 出現位置(3列目最上段)がすでに埋まっている場合はゲームオーバー
         if (board[1][2] !== 0) {
           current = null;
+          stopGravityTimer();
           state = "gameover";
           gameoverModal.classList.add("open");
         }
@@ -489,7 +540,6 @@
           render();
           return;
         }
-        // 壁蹴り・床蹴り
         const kicks = [
           { dx: -1, dy: 0 },
           { dx: 1, dy: 0 },
@@ -506,7 +556,8 @@
         }
       }
 
-      function softDrop() {
+      // 自動落下・下ドラッグ1段落下
+      function stepGravity() {
         if (state !== "playing" || !current) return false;
         if (isValidPos(current.x, current.y + 1, current.rot)) {
           current.y += 1;
@@ -529,6 +580,7 @@
 
       function lockPiece() {
         if (!current) return;
+        stopGravityTimer();
         const sub = getSubPos(current.x, current.y, current.rot);
         board[current.y][current.x] = current.main;
         if (sub.y >= 0 && sub.y < TOTAL_ROWS) {
@@ -538,7 +590,6 @@
         resolveBoard();
       }
 
-      // ちぎり落下（重力処理）
       function applyGravity() {
         let moved = false;
         for (let x = 0; x < COLS; x++) {
@@ -557,7 +608,6 @@
         return moved;
       }
 
-      // 4連結以上の探索
       function findMatches() {
         const visited = Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(false));
         const toClear = [];
@@ -609,14 +659,13 @@
         }, 750);
       }
 
-      // 連鎖解決ループ
       async function resolveBoard() {
         state = "resolving";
         let chainCount = 0;
 
         if (applyGravity()) {
           render();
-          await sleep(170);
+          await sleep(160);
         }
 
         while (true) {
@@ -630,11 +679,11 @@
             board[m.y][m.x] = 0;
           }
           render();
-          await sleep(250);
+          await sleep(240);
 
           if (applyGravity()) {
             render();
-            await sleep(190);
+            await sleep(180);
           }
         }
 
@@ -643,12 +692,11 @@
         } else {
           state = "playing";
           spawnPiece();
-          restartGravityTimer();
+          startGravityTimer();
           render();
         }
       }
 
-      // ぷよ単体描画
       function drawPuyo(context, px, py, size, colorId, neighbors = null, alpha = 1) {
         if (!colorId) return;
         const c = COLORS[colorId];
@@ -675,7 +723,6 @@
         context.fill();
         context.stroke();
 
-        // ハイライト
         context.fillStyle = "rgba(255, 255, 255, 0.35)";
         context.beginPath();
         context.arc(cx - r * 0.32, cy - r * 0.32, r * 0.22, 0, Math.PI * 2);
@@ -684,7 +731,6 @@
         context.restore();
       }
 
-      // 本家ぷよぷよ風 縦型ネクスト描画（NEXT: 縦2個 / NEXT2: 少し小さめに縦2個）
       function renderNext() {
         nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
         if (nextQueue.length < 2) return;
@@ -692,31 +738,27 @@
         const first = nextQueue[0];
         const second = nextQueue[1];
 
-        // 1手先 (NEXT): 上に子ぷよ(sub)、下に軸ぷよ(main)
-        const s1 = 30;
+        const s1 = 28;
         const x1 = (nextCanvas.width - s1) / 2;
         drawPuyo(nextCtx, x1, 2, s1, first.sub);
         drawPuyo(nextCtx, x1, 2 + s1 - 2, s1, first.main);
 
-        // 区切り線
         nextCtx.strokeStyle = "#e5e7eb";
         nextCtx.lineWidth = 1;
         nextCtx.beginPath();
-        nextCtx.moveTo(4, 68);
-        nextCtx.lineTo(nextCanvas.width - 4, 68);
+        nextCtx.moveTo(4, 62);
+        nextCtx.lineTo(nextCanvas.width - 4, 62);
         nextCtx.stroke();
 
-        // 2手先 (NEXT2): 少し小さめで下に配置
-        const s2 = 22;
-        const x2 = (nextCanvas.width - s2) / 2 + 2;
-        drawPuyo(nextCtx, x2, 76, s2, second.sub);
-        drawPuyo(nextCtx, x2, 76 + s2 - 2, s2, second.main);
+        const s2 = 20;
+        const x2 = (nextCanvas.width - s2) / 2;
+        drawPuyo(nextCtx, x2, 70, s2, second.sub);
+        drawPuyo(nextCtx, x2, 70 + s2 - 2, s2, second.main);
       }
 
       function render() {
         ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
-        // グリッド線
         ctx.strokeStyle = "#e0e3e8";
         ctx.lineWidth = 1;
         for (let x = 1; x < COLS; x++) {
@@ -732,19 +774,17 @@
           ctx.stroke();
         }
 
-        // 窒息ライン（3列目最上段の×印）
         const deathX = 2 * cellSize + cellSize / 2;
         const deathY = cellSize / 2;
         ctx.strokeStyle = "rgba(220, 38, 38, 0.35)";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(deathX - 7, deathY - 7);
-        ctx.lineTo(deathX + 7, deathY + 7);
-        ctx.moveTo(deathX + 7, deathY - 7);
-        ctx.lineTo(deathX - 7, deathY + 7);
+        ctx.moveTo(deathX - 6, deathY - 6);
+        ctx.lineTo(deathX + 6, deathY + 6);
+        ctx.moveTo(deathX + 6, deathY - 6);
+        ctx.lineTo(deathX - 6, deathY + 6);
         ctx.stroke();
 
-        // 固定済みぷよ描画
         for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
           for (let x = 0; x < COLS; x++) {
             const color = board[y][x];
@@ -759,7 +799,6 @@
           }
         }
 
-        // 操作中ぷよ & ゴースト描画
         if (current && (state === "playing" || state === "paused")) {
           if (showGhost) {
             let ghostY = current.y;
@@ -775,14 +814,13 @@
             }
           }
 
-          // 操作中本体（隠し段 y=0 にある場合も上半分が覗くように描画）
           const sub = getSubPos(current.x, current.y, current.rot);
           drawPuyo(ctx, current.x * cellSize, (current.y - HIDDEN_ROWS) * cellSize, cellSize, current.main);
           drawPuyo(ctx, sub.x * cellSize, (sub.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub);
         }
       }
 
-      // フリック・ドラッグ・タップ操作（画面全体）
+      // フリック・ドラッグ・タップ操作
       let touchStartX = 0;
       let touchStartY = 0;
       let lastMoveX = 0;
@@ -820,7 +858,7 @@
         }
 
         if (dy >= stepY) {
-          softDrop();
+          stepGravity();
           lastMoveY = e.clientY;
           hasMoved = true;
         }
@@ -835,13 +873,11 @@
 
         if (state !== "playing") return;
 
-        // 素早い下フリック -> ハードドロップ
         if (totalDy > 45 && Math.abs(totalDy) > Math.abs(totalDx) * 1.5 && elapsed < 260) {
           hardDrop();
           return;
         }
 
-        // タップ判定（左右半分で回転）
         if (!hasMoved && Math.abs(totalDx) < 12 && Math.abs(totalDy) < 12) {
           if (e.clientX < window.innerWidth / 2) {
             rotate(-1);
@@ -851,20 +887,30 @@
         }
       });
 
-      // PCキーボード操作対応
+      // PCキーボード補助
       window.addEventListener("keydown", (e) => {
         if (state !== "playing") return;
         if (e.key === "ArrowLeft") moveHorizontal(-1);
         else if (e.key === "ArrowRight") moveHorizontal(1);
-        else if (e.key === "ArrowDown") softDrop();
+        else if (e.key === "ArrowDown") stepGravity();
         else if (e.key === "ArrowUp") hardDrop();
         else if (e.key === "z" || e.key === "Z") rotate(-1);
         else if (e.key === "x" || e.key === "X") rotate(1);
       });
 
+      // スタートボタン
+      startBtn.addEventListener("click", () => {
+        titleScreen.classList.add("hidden");
+        resizeCanvas();
+        initGame();
+      });
+
       // 設定モーダル制御
       openSettingsBtn.addEventListener("click", () => {
-        if (state === "playing") state = "paused";
+        if (state === "playing") {
+          state = "paused";
+          stopGravityTimer();
+        }
         settingsModal.classList.add("open");
       });
 
@@ -873,22 +919,22 @@
         if (state === "paused") {
           state = "playing";
           if (!current) spawnPiece();
-          restartGravityTimer();
+          startGravityTimer();
           render();
         }
       });
 
-      // 落下スピード変更
       document.querySelectorAll(".speed-opt").forEach((btn) => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".speed-opt").forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
           dropInterval = Number(btn.dataset.speed);
-          restartGravityTimer();
+          if (state === "playing") {
+            startGravityTimer();
+          }
         });
       });
 
-      // 色数変更
       document.querySelectorAll(".color-opt").forEach((btn) => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".color-opt").forEach((b) => b.classList.remove("active"));
@@ -899,7 +945,6 @@
         });
       });
 
-      // ゴースト表示変更
       document.querySelectorAll(".ghost-opt").forEach((btn) => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".ghost-opt").forEach((b) => b.classList.remove("active"));
@@ -919,10 +964,7 @@
       });
 
       window.addEventListener("resize", resizeCanvas);
-
-      // 起動
       resizeCanvas();
-      initGame();
     })();
   </script>
 </body>
