@@ -46,41 +46,14 @@
       position: relative;
     }
 
-    /* 上部バー */
-    .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      max-width: 340px;
-      margin-bottom: 10px;
-    }
-
-    .next-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 6px 12px;
-    }
-
-    .next-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: var(--subtext);
-    }
-
-    #next-canvas {
-      display: block;
-    }
-
+    /* 右上固定の設定ボタン */
     .settings-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--text);
@@ -89,13 +62,22 @@
       justify-content: center;
       cursor: pointer;
       padding: 0;
+      z-index: 20;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .settings-btn:active {
       background: #e5e7eb;
     }
 
-    /* 盤面エリア */
+    /* メインプレイエリア（盤面中央配置＋右側に本家風NEXT） */
+    .play-stage {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
     .board-wrapper {
       position: relative;
       display: flex;
@@ -112,6 +94,35 @@
       display: block;
       background: var(--board-bg);
       border-radius: 8px;
+    }
+
+    /* 本家ぷよぷよ風 縦型ネクストウィンドウ（盤面の右上横に配置） */
+    .next-column {
+      position: absolute;
+      left: 100%;
+      top: 4px;
+      margin-left: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 6px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .next-label {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: var(--subtext);
+      line-height: 1;
+    }
+
+    #next-canvas {
+      display: block;
     }
 
     /* 連鎖表示 */
@@ -139,7 +150,7 @@
 
     /* 操作ヒント */
     .hint {
-      margin-top: 10px;
+      margin-top: 12px;
       font-size: 11px;
       color: var(--subtext);
       text-align: center;
@@ -163,7 +174,7 @@
 
     .modal {
       width: 100%;
-      max-width: 310px;
+      max-width: 320px;
       background: var(--surface);
       border-radius: 16px;
       padding: 20px;
@@ -178,24 +189,30 @@
     }
 
     .setting-group {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     .setting-title {
       font-size: 12px;
       font-weight: 600;
       color: var(--subtext);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
-    .speed-grid {
+    .option-grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
 
-    .speed-option {
-      padding: 10px 8px;
+    .option-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .opt-btn {
+      padding: 9px 6px;
       border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--bg);
@@ -206,7 +223,7 @@
       text-align: center;
     }
 
-    .speed-option.active {
+    .opt-btn.active {
       background: var(--accent);
       color: #fff;
       border-color: var(--accent);
@@ -216,6 +233,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      margin-top: 18px;
     }
 
     .btn {
@@ -240,24 +258,25 @@
   </style>
 </head>
 <body>
+  <button id="open-settings" class="settings-btn" aria-label="設定">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+
   <div id="app">
-    <div class="top-bar">
-      <div class="next-box">
-        <span class="next-label">NEXT</span>
-        <canvas id="next-canvas" width="56" height="28"></canvas>
+    <div class="play-stage">
+      <div class="board-wrapper">
+        <canvas id="board-canvas"></canvas>
+        <div id="chain-banner">2 連鎖!</div>
       </div>
 
-      <button id="open-settings" class="settings-btn" aria-label="設定">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-      </button>
-    </div>
-
-    <div class="board-wrapper">
-      <canvas id="board-canvas"></canvas>
-      <div id="chain-banner">2 連鎖!</div>
+      <!-- 本家風 縦2連のNEXT & NEXT2 -->
+      <div class="next-column">
+        <span class="next-label">NEXT</span>
+        <canvas id="next-canvas" width="34" height="128"></canvas>
+      </div>
     </div>
 
     <div class="hint">左右スワイプ: 移動 / 下ドラッグ・フリック: 落下 / 左右タップ: 回転</div>
@@ -267,15 +286,34 @@
   <div id="settings-modal" class="modal-backdrop">
     <div class="modal">
       <h2>設定</h2>
+
       <div class="setting-group">
         <div class="setting-title">落下スピード</div>
-        <div class="speed-grid">
-          <button class="speed-option" data-speed="0">手動のみ</button>
-          <button class="speed-option" data-speed="1100">ゆっくり</button>
-          <button class="speed-option active" data-speed="650">ふつう</button>
-          <button class="speed-option" data-speed="280">はやい</button>
+        <div class="option-grid-2">
+          <button class="opt-btn speed-opt" data-speed="0">手動のみ</button>
+          <button class="opt-btn speed-opt" data-speed="1100">ゆっくり</button>
+          <button class="opt-btn speed-opt active" data-speed="650">ふつう</button>
+          <button class="opt-btn speed-opt" data-speed="280">はやい</button>
         </div>
       </div>
+
+      <div class="setting-group">
+        <div class="setting-title">ぷよの色数（練習用）</div>
+        <div class="option-grid-3">
+          <button class="opt-btn color-opt" data-colors="3">3色</button>
+          <button class="opt-btn color-opt active" data-colors="4">4色</button>
+          <button class="opt-btn color-opt" data-colors="5">5色</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-title">落下予測（ゴースト表示）</div>
+        <div class="option-grid-2">
+          <button class="opt-btn ghost-opt active" data-ghost="1">表示する</button>
+          <button class="opt-btn ghost-opt" data-ghost="0">非表示</button>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button id="reset-btn" class="btn btn-danger">盤面をリセット</button>
         <button id="close-settings" class="btn btn-primary">閉じる</button>
@@ -298,15 +336,16 @@
       const COLS = 6;
       const VISIBLE_ROWS = 12;
       const HIDDEN_ROWS = 1;
-      const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS; // 0番目が隠し段、1〜12が表示段
+      const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS; // 0: 隠し段(13段目), 1〜12: 表示段
 
-      // シンプルな4色パレット
+      // 落ち着いたフラットカラー（最大5色）
       const COLORS = [
         null,
         { fill: "#ef4444", stroke: "#dc2626" }, // 1: 赤
         { fill: "#3b82f6", stroke: "#2563eb" }, // 2: 青
         { fill: "#22c55e", stroke: "#16a34a" }, // 3: 緑
-        { fill: "#eab308", stroke: "#ca8a04" }  // 4: 黄
+        { fill: "#eab308", stroke: "#ca8a04" }, // 4: 黄
+        { fill: "#a855f7", stroke: "#9333ea" }  // 5: 紫
       ];
 
       // 回転方向ベクトル (0:上, 1:右, 2:下, 3:左)
@@ -329,27 +368,26 @@
       const closeSettingsBtn = document.getElementById("close-settings");
       const resetBtn = document.getElementById("reset-btn");
       const retryBtn = document.getElementById("retry-btn");
-      const speedButtons = document.querySelectorAll(".speed-option");
 
-      let cellSize = 44;
+      let cellSize = 42;
       let board = [];
       let current = null; // { x, y, rot, main, sub }
-      let nextPair = null; // { main, sub }
+      let nextQueue = []; // [NEXT, NEXT2]
 
+      // 設定パラメータ
       let dropInterval = 650; // ms (0 = 手動のみ)
-      let dropTimer = 0;
-      let lastTime = 0;
+      let colorCount = 4;     // 3〜5色
+      let showGhost = true;
 
-      // 状態: 'playing' | 'resolving' | 'paused' | 'gameover'
-      let state = "playing";
-      let chainCount = 0;
+      let gravityTimerId = null;
+      let state = "playing"; // 'playing' | 'resolving' | 'paused' | 'gameover'
 
-      // 盤面サイズのレスポンシブ調整
+      // 盤面サイズのレスポンシブ調整（右側のNEXT枠の余白も考慮して中央配置）
       function resizeCanvas() {
-        const maxH = window.innerHeight - 135;
-        const maxW = window.innerWidth - 44;
+        const maxH = window.innerHeight - 105;
+        const maxW = window.innerWidth - 115; // NEXT枠ぶんを確保
         cellSize = Math.floor(Math.min(maxW / COLS, maxH / VISIBLE_ROWS));
-        cellSize = Math.max(32, Math.min(54, cellSize));
+        cellSize = Math.max(30, Math.min(52, cellSize));
 
         boardCanvas.width = COLS * cellSize;
         boardCanvas.height = VISIBLE_ROWS * cellSize;
@@ -357,7 +395,7 @@
       }
 
       function randomColor() {
-        return Math.floor(Math.random() * 4) + 1;
+        return Math.floor(Math.random() * colorCount) + 1;
       }
 
       function createEmptyBoard() {
@@ -368,33 +406,46 @@
         return { main: randomColor(), sub: randomColor() };
       }
 
+      // 確実な自動落下タイマー管理
+      function restartGravityTimer() {
+        if (gravityTimerId !== null) {
+          clearInterval(gravityTimerId);
+          gravityTimerId = null;
+        }
+        if (dropInterval > 0) {
+          gravityTimerId = setInterval(() => {
+            if (state === "playing" && current) {
+              softDrop();
+            }
+          }, dropInterval);
+        }
+      }
+
       function initGame() {
         board = createEmptyBoard();
-        nextPair = generatePair();
-        chainCount = 0;
-        dropTimer = 0;
+        nextQueue = [generatePair(), generatePair()];
         state = "playing";
         gameoverModal.classList.remove("open");
         spawnPiece();
-        renderNext();
+        restartGravityTimer();
         render();
       }
 
       function spawnPiece() {
-        const pair = nextPair;
-        nextPair = generatePair();
+        const pair = nextQueue.shift();
+        nextQueue.push(generatePair());
         renderNext();
 
+        // 出現位置：3列目(x=2)の1段目(y=1)、子ぷよは上の隠し段(y=0)
         current = {
           x: 2,
-          y: 1, // 表示上の最上段
-          rot: 0, // 子ぷよは上(隠し段 y=0)
+          y: 1,
+          rot: 0,
           main: pair.main,
           sub: pair.sub
         };
-        dropTimer = 0;
 
-        // 出現位置(3列目上段)がすでに埋まっている場合はゲームオーバー
+        // 出現位置(3列目最上段)がすでに埋まっている場合はゲームオーバー
         if (board[1][2] !== 0) {
           current = null;
           state = "gameover";
@@ -433,7 +484,6 @@
         if (state !== "playing" || !current) return;
         const nextRot = (current.rot + dir + 4) % 4;
 
-        // 通常回転
         if (isValidPos(current.x, current.y, nextRot)) {
           current.rot = nextRot;
           render();
@@ -460,7 +510,6 @@
         if (state !== "playing" || !current) return false;
         if (isValidPos(current.x, current.y + 1, current.rot)) {
           current.y += 1;
-          dropTimer = 0;
           render();
           return true;
         } else {
@@ -489,7 +538,7 @@
         resolveBoard();
       }
 
-      // 重力落下処理（ちぎり落下）
+      // ちぎり落下（重力処理）
       function applyGravity() {
         let moved = false;
         for (let x = 0; x < COLS; x++) {
@@ -508,7 +557,7 @@
         return moved;
       }
 
-      // 4つ以上連結しているぷよを探索
+      // 4連結以上の探索
       function findMatches() {
         const visited = Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(false));
         const toClear = [];
@@ -563,11 +612,11 @@
       // 連鎖解決ループ
       async function resolveBoard() {
         state = "resolving";
-        chainCount = 0;
+        let chainCount = 0;
 
         if (applyGravity()) {
           render();
-          await sleep(180);
+          await sleep(170);
         }
 
         while (true) {
@@ -581,25 +630,25 @@
             board[m.y][m.x] = 0;
           }
           render();
-          await sleep(260);
+          await sleep(250);
 
           if (applyGravity()) {
             render();
-            await sleep(200);
+            await sleep(190);
           }
         }
 
-        // 設定画面が開かれていなければ次のぷよを出現
         if (settingsModal.classList.contains("open")) {
           state = "paused";
         } else {
           state = "playing";
           spawnPiece();
+          restartGravityTimer();
           render();
         }
       }
 
-      // 描画処理
+      // ぷよ単体描画
       function drawPuyo(context, px, py, size, colorId, neighbors = null, alpha = 1) {
         if (!colorId) return;
         const c = COLORS[colorId];
@@ -613,7 +662,6 @@
         context.strokeStyle = c.stroke;
         context.lineWidth = 2;
 
-        // 同色連結ブリッジ
         if (neighbors) {
           const bw = r * 1.15;
           if (neighbors.up) context.fillRect(cx - bw / 2, py, bw, size / 2);
@@ -622,13 +670,12 @@
           if (neighbors.right) context.fillRect(cx, cy - bw / 2, size / 2, bw);
         }
 
-        // 本体
         context.beginPath();
         context.arc(cx, cy, r, 0, Math.PI * 2);
         context.fill();
         context.stroke();
 
-        // ハイライト（シンプルに1点）
+        // ハイライト
         context.fillStyle = "rgba(255, 255, 255, 0.35)";
         context.beginPath();
         context.arc(cx - r * 0.32, cy - r * 0.32, r * 0.22, 0, Math.PI * 2);
@@ -637,11 +684,33 @@
         context.restore();
       }
 
+      // 本家ぷよぷよ風 縦型ネクスト描画（NEXT: 縦2個 / NEXT2: 少し小さめに縦2個）
       function renderNext() {
         nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-        if (!nextPair) return;
-        drawPuyo(nextCtx, 0, 0, 28, nextPair.main);
-        drawPuyo(nextCtx, 28, 0, 28, nextPair.sub);
+        if (nextQueue.length < 2) return;
+
+        const first = nextQueue[0];
+        const second = nextQueue[1];
+
+        // 1手先 (NEXT): 上に子ぷよ(sub)、下に軸ぷよ(main)
+        const s1 = 30;
+        const x1 = (nextCanvas.width - s1) / 2;
+        drawPuyo(nextCtx, x1, 2, s1, first.sub);
+        drawPuyo(nextCtx, x1, 2 + s1 - 2, s1, first.main);
+
+        // 区切り線
+        nextCtx.strokeStyle = "#e5e7eb";
+        nextCtx.lineWidth = 1;
+        nextCtx.beginPath();
+        nextCtx.moveTo(4, 68);
+        nextCtx.lineTo(nextCanvas.width - 4, 68);
+        nextCtx.stroke();
+
+        // 2手先 (NEXT2): 少し小さめで下に配置
+        const s2 = 22;
+        const x2 = (nextCanvas.width - s2) / 2 + 2;
+        drawPuyo(nextCtx, x2, 76, s2, second.sub);
+        drawPuyo(nextCtx, x2, 76 + s2 - 2, s2, second.main);
       }
 
       function render() {
@@ -692,45 +761,25 @@
 
         // 操作中ぷよ & ゴースト描画
         if (current && (state === "playing" || state === "paused")) {
-          // ゴースト位置計算
-          let ghostY = current.y;
-          while (isValidPos(current.x, ghostY + 1, current.rot)) {
-            ghostY++;
-          }
-          const ghostSub = getSubPos(current.x, ghostY, current.rot);
-          if (ghostY >= HIDDEN_ROWS) {
-            drawPuyo(ctx, current.x * cellSize, (ghostY - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.2);
-          }
-          if (ghostSub.y >= HIDDEN_ROWS) {
-            drawPuyo(ctx, ghostSub.x * cellSize, (ghostSub.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.2);
+          if (showGhost) {
+            let ghostY = current.y;
+            while (isValidPos(current.x, ghostY + 1, current.rot)) {
+              ghostY++;
+            }
+            const ghostSub = getSubPos(current.x, ghostY, current.rot);
+            if (ghostY >= HIDDEN_ROWS) {
+              drawPuyo(ctx, current.x * cellSize, (ghostY - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.22);
+            }
+            if (ghostSub.y >= HIDDEN_ROWS) {
+              drawPuyo(ctx, ghostSub.x * cellSize, (ghostSub.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.22);
+            }
           }
 
-          // 本体描画
+          // 操作中本体（隠し段 y=0 にある場合も上半分が覗くように描画）
           const sub = getSubPos(current.x, current.y, current.rot);
-          if (current.y >= HIDDEN_ROWS) {
-            drawPuyo(ctx, current.x * cellSize, (current.y - HIDDEN_ROWS) * cellSize, cellSize, current.main);
-          }
-          if (sub.y >= HIDDEN_ROWS) {
-            drawPuyo(ctx, sub.x * cellSize, (sub.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub);
-          }
+          drawPuyo(ctx, current.x * cellSize, (current.y - HIDDEN_ROWS) * cellSize, cellSize, current.main);
+          drawPuyo(ctx, sub.x * cellSize, (sub.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub);
         }
-      }
-
-      // メインループ
-      function gameLoop(timestamp) {
-        if (!lastTime) lastTime = timestamp;
-        const dt = timestamp - lastTime;
-        lastTime = timestamp;
-
-        if (state === "playing" && dropInterval > 0) {
-          dropTimer += dt;
-          if (dropTimer >= dropInterval) {
-            dropTimer = 0;
-            softDrop();
-          }
-        }
-
-        requestAnimationFrame(gameLoop);
       }
 
       // フリック・ドラッグ・タップ操作（画面全体）
@@ -786,23 +835,23 @@
 
         if (state !== "playing") return;
 
-        // 素早い下フリック -> ハードドロップ（即落下）
+        // 素早い下フリック -> ハードドロップ
         if (totalDy > 45 && Math.abs(totalDy) > Math.abs(totalDx) * 1.5 && elapsed < 260) {
           hardDrop();
           return;
         }
 
-        // ほとんど動かずに離した場合はタップ判定（左右半分で回転）
+        // タップ判定（左右半分で回転）
         if (!hasMoved && Math.abs(totalDx) < 12 && Math.abs(totalDy) < 12) {
           if (e.clientX < window.innerWidth / 2) {
-            rotate(-1); // 左回転
+            rotate(-1);
           } else {
-            rotate(1);  // 右回転
+            rotate(1);
           }
         }
       });
 
-      // PCキーボード操作も補助的に対応
+      // PCキーボード操作対応
       window.addEventListener("keydown", (e) => {
         if (state !== "playing") return;
         if (e.key === "ArrowLeft") moveHorizontal(-1);
@@ -824,16 +873,39 @@
         if (state === "paused") {
           state = "playing";
           if (!current) spawnPiece();
+          restartGravityTimer();
           render();
         }
       });
 
-      speedButtons.forEach((btn) => {
+      // 落下スピード変更
+      document.querySelectorAll(".speed-opt").forEach((btn) => {
         btn.addEventListener("click", () => {
-          speedButtons.forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".speed-opt").forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
           dropInterval = Number(btn.dataset.speed);
-          dropTimer = 0;
+          restartGravityTimer();
+        });
+      });
+
+      // 色数変更
+      document.querySelectorAll(".color-opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".color-opt").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          colorCount = Number(btn.dataset.colors);
+          nextQueue = [generatePair(), generatePair()];
+          renderNext();
+        });
+      });
+
+      // ゴースト表示変更
+      document.querySelectorAll(".ghost-opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".ghost-opt").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          showGhost = btn.dataset.ghost === "1";
+          render();
         });
       });
 
@@ -851,7 +923,6 @@
       // 起動
       resizeCanvas();
       initGame();
-      requestAnimationFrame(gameLoop);
     })();
   </script>
 </body>
