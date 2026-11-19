@@ -261,14 +261,14 @@
     }
 
     .sec {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .actions {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-top: 18px;
+      margin-top: 16px;
     }
 
     .act-btn {
@@ -345,6 +345,15 @@
       </div>
 
       <div class="sec">
+        <div class="label">フリック感度</div>
+        <div class="grid-3">
+          <button type="button" class="chip-btn sens-choice" data-sens="low">ゆったり</button>
+          <button type="button" class="chip-btn sens-choice active" data-sens="mid">ふつう</button>
+          <button type="button" class="chip-btn sens-choice" data-sens="high">敏感</button>
+        </div>
+      </div>
+
+      <div class="sec">
         <div class="label">落下予測（ゴースト）</div>
         <div class="grid-2">
           <button type="button" class="chip-btn ghost-choice active" data-ghost="1">表示する</button>
@@ -391,6 +400,13 @@
       { dx: -1, dy: 0 }
     ];
 
+    // フリック感度プリセット（stepRatio: 1マス移動に必要な指の移動量比率, flickDist: 下フリック距離）
+    const SENSITIVITY_PRESETS = {
+      low:  { stepRatio: 0.90, flickDist: 62 },
+      mid:  { stepRatio: 0.65, flickDist: 45 },
+      high: { stepRatio: 0.42, flickDist: 32 }
+    };
+
     const titleScreen = document.getElementById("title-screen");
     const startBtn = document.getElementById("start-btn");
     const settingsBtn = document.getElementById("settings-btn");
@@ -414,6 +430,7 @@
 
     let colorCount = 4;
     let dropMs = 600;
+    let sensitivity = "mid";
     let showGhost = true;
 
     let running = false;
@@ -423,9 +440,9 @@
     let fallTimer = null;
 
     // 演出用状態
-    let poppingCells = new Map(); // "x,y" -> { scaleX, scaleY, color }
-    let particles = []; // 弾ける粒エフェクト
-    let landingSquash = []; // 着地スクイーズ { x, y, timer }
+    let poppingCells = new Map();
+    let particles = [];
+    let landingSquash = [];
     let animFrameId = null;
 
     function fitBoard() {
@@ -655,7 +672,6 @@
 
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    // 本家ぷよぷよ風の連鎖カットイン（連鎖数に応じて色とサイズを変化）
     function showChainPop(n) {
       if (n < 2) return;
       chainPop.textContent = `${n}連鎖!`;
@@ -678,7 +694,6 @@
       chainPop.classList.add("show");
     }
 
-    // 消えるぷよの膨張＆弾けパーティクル生成
     function spawnPopBurst(x, y, colorId) {
       const col = COLORS[colorId];
       if (!col) return;
@@ -706,7 +721,6 @@
       const step = () => {
         let active = false;
 
-        // 弾ける粒の更新
         if (particles.length > 0) {
           active = true;
           for (const pt of particles) {
@@ -719,7 +733,6 @@
           particles = particles.filter((pt) => pt.life > 0);
         }
 
-        // 着地スクイーズの更新
         if (landingSquash.length > 0) {
           active = true;
           for (const sq of landingSquash) {
@@ -759,7 +772,6 @@
         chain += 1;
         showChainPop(chain);
 
-        // 1. 消えるぷよをぷるんと膨らませる（本家風の予兆）
         poppingCells.clear();
         for (const m of matches) {
           poppingCells.set(`${m.x},${m.y}`, {
@@ -772,7 +784,6 @@
         draw();
         await wait(150);
 
-        // 2. パッと消去＋粒が弾ける
         for (const m of matches) {
           const c = board[m.y][m.x];
           board[m.y][m.x] = 0;
@@ -783,7 +794,6 @@
         draw();
         await wait(140);
 
-        // 3. 上のぷよが落ちてくる
         if (dropFloating()) {
           draw();
           await wait(160);
@@ -936,7 +946,6 @@
         paintPuyo(ctx, s.x * cellSize, (s.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub);
       }
 
-      // 弾けるパーティクル描画
       for (const pt of particles) {
         ctx.save();
         ctx.globalAlpha = pt.alpha;
@@ -988,6 +997,15 @@
       });
     });
 
+    // フリック感度
+    document.querySelectorAll(".sens-choice").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".sens-choice").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        sensitivity = btn.dataset.sens;
+      });
+    });
+
     // ゴースト表示
     document.querySelectorAll(".ghost-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1023,9 +1041,10 @@
 
     gameScreen.addEventListener("pointermove", (e) => {
       if (!dragging || !canControl()) return;
+      const preset = SENSITIVITY_PRESETS[sensitivity] || SENSITIVITY_PRESETS.mid;
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
-      const step = cellSize * 0.65;
+      const step = cellSize * preset.stepRatio;
 
       if (Math.abs(dx) >= step) {
         moveX(dx > 0 ? 1 : -1);
@@ -1044,11 +1063,12 @@
       dragging = false;
       if (!canControl()) return;
 
+      const preset = SENSITIVITY_PRESETS[sensitivity] || SENSITIVITY_PRESETS.mid;
       const totalDx = e.clientX - startX;
       const totalDy = e.clientY - startY;
       const dt = performance.now() - startT;
 
-      if (totalDy > 45 && Math.abs(totalDy) > Math.abs(totalDx) * 1.5 && dt < 260) {
+      if (totalDy > preset.flickDist && Math.abs(totalDy) > Math.abs(totalDx) * 1.5 && dt < 280) {
         dropHard();
         return;
       }
