@@ -502,7 +502,6 @@
   </div>
 
   <script>
-    // ホーム画面追加用アイコン（SVG Data URI + Web App Manifest）を生成
     (function setupAppIcon() {
       const svgIcon = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -530,15 +529,12 @@
           <rect width="512" height="512" rx="116" fill="url(#bgGrad)"/>
           <rect x="14" y="14" width="484" height="484" rx="104" fill="none" stroke="#252b37" stroke-width="4"/>
 
-          <!-- 左上：赤 -->
           <path d="M112 215 C112 145, 224 145, 224 215 C224 275, 112 275, 112 215 Z" fill="url(#puyoRed)"/>
           <ellipse cx="148" cy="186" rx="22" ry="12" transform="rotate(-28 148 186)" fill="rgba(255,255,255,0.68)"/>
 
-          <!-- 右上：青 -->
           <path d="M286 235 C286 165, 398 165, 398 235 C398 295, 286 295, 286 235 Z" fill="url(#puyoBlue)"/>
           <ellipse cx="322" cy="206" rx="22" ry="12" transform="rotate(-28 322 206)" fill="rgba(255,255,255,0.68)"/>
 
-          <!-- 下中央：緑 -->
           <path d="M196 325 C196 250, 316 250, 316 325 C316 392, 196 392, 196 325 Z" fill="url(#puyoGreen)"/>
           <ellipse cx="234" cy="292" rx="24" ry="13" transform="rotate(-28 234 292)" fill="rgba(255,255,255,0.72)"/>
         </svg>
@@ -581,9 +577,7 @@
         manifestLink.rel = "manifest";
         manifestLink.href = manifestUrl;
         document.head.appendChild(manifestLink);
-      } catch (_) {
-        // Blob未対応環境でも apple-touch-icon と favicon は有効
-      }
+      } catch (_) {}
     })();
 
     const COLS = 6;
@@ -591,7 +585,6 @@
     const HIDDEN_ROWS = 1;
     const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS;
 
-    // 立体感・内部の奥行きを出すためのカラー設計
     const COLORS = [
       null,
       { light: "#fecaca", fill: "#ef4444", deep: "#7f1d1d", bounce: "rgba(254, 202, 202, 0.28)", rim: "rgba(255, 228, 230, 0.35)" },
@@ -1036,7 +1029,61 @@
       }
     }
 
-    // 安っぽさを抑えた多層グラデーション＆内部反射のぷよ描画
+    // 本家ぷよぷよ風の「なめらかなネック（くびれ）」で同色ぷよをつなぐ描画
+    function drawSmoothNeck(c2d, px, py, size, dir, col) {
+      const cx = px + size / 2;
+      const cy = py + size / 2;
+      const r = size * 0.42;
+      const neckHalf = size * 0.20; // くびれの太さ（ぷよの半径より細くして「くびれ」を作る）
+      const reach = size * 0.56;    // 隣のぷよの中心側へ少し食い込ませて継ぎ目を消す
+
+      c2d.save();
+      c2d.beginPath();
+
+      if (dir === "right") {
+        const xStart = cx + r * 0.48;
+        const xEnd = cx + reach;
+        c2d.moveTo(xStart, cy - neckHalf);
+        c2d.quadraticCurveTo((xStart + xEnd) / 2, cy - neckHalf * 0.72, xEnd, cy - neckHalf * 0.92);
+        c2d.lineTo(xEnd, cy + neckHalf * 0.92);
+        c2d.quadraticCurveTo((xStart + xEnd) / 2, cy + neckHalf * 0.72, xStart, cy + neckHalf);
+        c2d.closePath();
+      } else if (dir === "left") {
+        const xStart = cx - r * 0.48;
+        const xEnd = cx - reach;
+        c2d.moveTo(xStart, cy - neckHalf);
+        c2d.quadraticCurveTo((xStart + xEnd) / 2, cy - neckHalf * 0.72, xEnd, cy - neckHalf * 0.92);
+        c2d.lineTo(xEnd, cy + neckHalf * 0.92);
+        c2d.quadraticCurveTo((xStart + xEnd) / 2, cy + neckHalf * 0.72, xStart, cy + neckHalf);
+        c2d.closePath();
+      } else if (dir === "down") {
+        const yStart = cy + r * 0.48;
+        const yEnd = cy + reach;
+        c2d.moveTo(cx - neckHalf, yStart);
+        c2d.quadraticCurveTo(cx - neckHalf * 0.72, (yStart + yEnd) / 2, cx - neckHalf * 0.92, yEnd);
+        c2d.lineTo(cx + neckHalf * 0.92, yEnd);
+        c2d.quadraticCurveTo(cx + neckHalf * 0.72, (yStart + yEnd) / 2, cx + neckHalf, yStart);
+        c2d.closePath();
+      } else if (dir === "up") {
+        const yStart = cy - r * 0.48;
+        const yEnd = cy - reach;
+        c2d.moveTo(cx - neckHalf, yStart);
+        c2d.quadraticCurveTo(cx - neckHalf * 0.72, (yStart + yEnd) / 2, cx - neckHalf * 0.92, yEnd);
+        c2d.lineTo(cx + neckHalf * 0.92, yEnd);
+        c2d.quadraticCurveTo(cx + neckHalf * 0.72, (yStart + yEnd) / 2, cx + neckHalf, yStart);
+        c2d.closePath();
+      }
+
+      const neckGrad = c2d.createLinearGradient(px, py, px, py + size);
+      neckGrad.addColorStop(0, col.light);
+      neckGrad.addColorStop(0.35, col.fill);
+      neckGrad.addColorStop(1, col.deep);
+
+      c2d.fillStyle = neckGrad;
+      c2d.fill();
+      c2d.restore();
+    }
+
     function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1, scaleX = 1, scaleY = 1) {
       if (!colorId) return;
       const col = COLORS[colorId];
@@ -1052,22 +1099,20 @@
       c2d.scale(scaleX, scaleY);
       c2d.translate(-cx, -cy);
 
-      // 接地影（空間に浮いている安っぽさを軽減）
+      // 接地影
       if (alpha > 0.4) {
-        c2d.fillStyle = "rgba(0, 0, 0, 0.36)";
+        c2d.fillStyle = "rgba(0, 0, 0, 0.34)";
         c2d.beginPath();
-        c2d.ellipse(cx, cy + ryBot * 0.96, rx * 0.78, Math.max(2, size * 0.08), 0, 0, Math.PI * 2);
+        c2d.ellipse(cx, cy + ryBot * 0.96, rx * 0.76, Math.max(2, size * 0.075), 0, 0, Math.PI * 2);
         c2d.fill();
       }
 
-      // 同色連結ブリッジ
+      // 同色隣り合い時の「なめらかなくびれ（ネック）」を線なしで描画
       if (link) {
-        const bw = rx * 1.12;
-        c2d.fillStyle = col.fill;
-        if (link.up) c2d.fillRect(cx - bw / 2, py, bw, size / 2 + 1);
-        if (link.down) c2d.fillRect(cx - bw / 2, cy - 1, bw, size / 2 + 1);
-        if (link.left) c2d.fillRect(px, cy - bw / 2, size / 2 + 1, bw);
-        if (link.right) c2d.fillRect(cx - 1, cy - bw / 2, size / 2 + 1, bw);
+        if (link.up) drawSmoothNeck(c2d, px, py, size, "up", col);
+        if (link.down) drawSmoothNeck(c2d, px, py, size, "down", col);
+        if (link.left) drawSmoothNeck(c2d, px, py, size, "left", col);
+        if (link.right) drawSmoothNeck(c2d, px, py, size, "right", col);
       }
 
       const traceBody = () => {
@@ -1078,7 +1123,7 @@
         c2d.closePath();
       };
 
-      // 本体ベース（濃い底色〜中間色〜上部の明暗）
+      // 本体ベース
       traceBody();
       const baseGrad = c2d.createLinearGradient(cx, cy - ryTop, cx, cy + ryBot);
       baseGrad.addColorStop(0, col.light);
@@ -1087,7 +1132,7 @@
       c2d.fillStyle = baseGrad;
       c2d.fill();
 
-      // クリップして内部の奥行き（左上光源＋下部のバウンス光）を重ねる
+      // 内部の奥行き＆バウンス光＆ソフトハイライト
       c2d.save();
       traceBody();
       c2d.clip();
@@ -1106,14 +1151,12 @@
       c2d.fillStyle = innerLight;
       c2d.fillRect(px, py, size, size);
 
-      // 下部からの反射光（ゼリー・半透明素材の質感）
       const bounceGrad = c2d.createLinearGradient(cx, cy + ryBot * 0.25, cx, cy + ryBot * 1.05);
       bounceGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
       bounceGrad.addColorStop(1, col.bounce);
       c2d.fillStyle = bounceGrad;
       c2d.fillRect(px, py, size, size);
 
-      // 柔らかいぼかし風のハイライト
       const softSpec = c2d.createRadialGradient(
         cx - rx * 0.34,
         cy - ryTop * 0.38,
@@ -1131,13 +1174,13 @@
 
       c2d.restore();
 
-      // 繊細なリムライン（境界をクッキリさせつつ硬さを出さない）
+      // 繊細なリムライン
       traceBody();
       c2d.strokeStyle = col.rim;
       c2d.lineWidth = 1;
       c2d.stroke();
 
-      // 小さなツヤ点（くっきりした光点）
+      // 小さなツヤ点
       c2d.fillStyle = "rgba(255, 255, 255, 0.78)";
       c2d.beginPath();
       c2d.ellipse(
@@ -1292,7 +1335,6 @@
       }
     }
 
-    // タイトル画面ボタン
     startBtn.addEventListener("click", () => {
       titleScreen.classList.add("hidden");
       resetBoardState();
@@ -1302,7 +1344,6 @@
       openSettings(true);
     });
 
-    // ゲーム画面 設定ボタン
     settingsBtn.addEventListener("click", () => {
       openSettings(false);
     });
@@ -1310,7 +1351,6 @@
     closeSettingsBtn.addEventListener("click", closeSettings);
     modalTitleBtn.addEventListener("click", goToTitle);
 
-    // 落下スピード
     document.querySelectorAll(".speed-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".speed-choice").forEach((b) => b.classList.remove("active"));
@@ -1321,7 +1361,6 @@
       });
     });
 
-    // ぷよの色数（タイトル設定のみ表示）
     document.querySelectorAll(".color-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".color-choice").forEach((b) => b.classList.remove("active"));
@@ -1331,7 +1370,6 @@
       });
     });
 
-    // フリック感度
     document.querySelectorAll(".sens-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".sens-choice").forEach((b) => b.classList.remove("active"));
@@ -1341,7 +1379,6 @@
       });
     });
 
-    // ゴースト表示
     document.querySelectorAll(".ghost-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".ghost-choice").forEach((b) => b.classList.remove("active"));
@@ -1352,12 +1389,10 @@
       });
     });
 
-    // リセット / リトライ / タイトルへ戻る
     resetBtn.addEventListener("click", resetBoardState);
     retryBtn.addEventListener("click", resetBoardState);
     backTitleBtn.addEventListener("click", goToTitle);
 
-    // タッチ・マウス操作
     let dragging = false;
     let startX = 0;
     let startY = 0;
@@ -1422,7 +1457,6 @@
     gameScreen.addEventListener("pointerup", finishPointer);
     gameScreen.addEventListener("pointercancel", finishPointer);
 
-    // PCキーボード補助
     window.addEventListener("keydown", (e) => {
       if (!canControl()) return;
       if (e.key === "ArrowLeft") moveX(-1);
