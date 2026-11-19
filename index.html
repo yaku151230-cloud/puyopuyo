@@ -35,7 +35,7 @@
       touch-action: none;
     }
 
-    /* スタート画面 */
+    /* タイトル画面 */
     #title-screen {
       position: fixed;
       inset: 0;
@@ -44,7 +44,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 28px;
+      gap: 24px;
       z-index: 60;
       padding: 24px;
     }
@@ -59,6 +59,23 @@
       letter-spacing: 0.08em;
       color: var(--text);
       margin: 0;
+    }
+
+    .title-settings-card {
+      width: 100%;
+      max-width: 300px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+
+    .title-setting-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--subtext);
+      margin-bottom: 8px;
     }
 
     .start-btn {
@@ -89,7 +106,6 @@
       position: relative;
     }
 
-    /* 右上固定の設定ボタン */
     .settings-btn {
       position: fixed;
       top: 12px;
@@ -113,7 +129,6 @@
       background: #e5e7eb;
     }
 
-    /* 盤面とNEXTを並べるエリア（設定ボタンと被らないよう上部に余白） */
     .play-stage {
       position: relative;
       display: flex;
@@ -139,7 +154,6 @@
       border-radius: 8px;
     }
 
-    /* 盤面の右横（設定ボタンの下）に配置するNEXT */
     .next-column {
       margin-left: 8px;
       margin-top: 2px;
@@ -167,7 +181,6 @@
       display: block;
     }
 
-    /* 連鎖表示 */
     #chain-banner {
       position: absolute;
       top: 50%;
@@ -215,7 +228,7 @@
 
     .modal {
       width: 100%;
-      max-width: 320px;
+      max-width: 310px;
       background: var(--surface);
       border-radius: 16px;
       padding: 20px;
@@ -302,10 +315,20 @@
   <!-- タイトル画面 -->
   <div id="title-screen">
     <h1 class="title-logo">ぷよぷよ</h1>
+
+    <div class="title-settings-card">
+      <div class="title-setting-label">ぷよの色数</div>
+      <div class="option-grid-3">
+        <button class="opt-btn title-color-opt" data-colors="3">3色</button>
+        <button class="opt-btn title-color-opt active" data-colors="4">4色</button>
+        <button class="opt-btn title-color-opt" data-colors="5">5色</button>
+      </div>
+    </div>
+
     <button id="start-btn" class="start-btn">スタート</button>
   </div>
 
-  <!-- 設定ボタン -->
+  <!-- 設定ボタン（プレイ中） -->
   <button id="open-settings" class="settings-btn" aria-label="設定">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"></circle>
@@ -329,7 +352,7 @@
     <div class="hint">左右スワイプ: 移動 / 下ドラッグ・フリック: 落下 / 左右タップ: 回転</div>
   </div>
 
-  <!-- 設定モーダル -->
+  <!-- プレイ中設定モーダル（色数はタイトルで選択済みのものを使用） -->
   <div id="settings-modal" class="modal-backdrop">
     <div class="modal">
       <h2>設定</h2>
@@ -341,15 +364,6 @@
           <button class="opt-btn speed-opt" data-speed="1100">ゆっくり</button>
           <button class="opt-btn speed-opt active" data-speed="650">ふつう</button>
           <button class="opt-btn speed-opt" data-speed="280">はやい</button>
-        </div>
-      </div>
-
-      <div class="setting-group">
-        <div class="setting-title">ぷよの色数（練習用）</div>
-        <div class="option-grid-3">
-          <button class="opt-btn color-opt" data-colors="3">3色</button>
-          <button class="opt-btn color-opt active" data-colors="4">4色</button>
-          <button class="opt-btn color-opt" data-colors="5">5色</button>
         </div>
       </div>
 
@@ -422,15 +436,17 @@
       let current = null;
       let nextQueue = [];
 
-      let dropInterval = 650;
-      let colorCount = 4;
+      let dropInterval = 650; // ms (0 = 手動のみ)
+      let colorCount = 4;     // タイトル画面で決定
       let showGhost = true;
 
-      let gravityTimerId = null;
-      // 'title' | 'playing' | 'resolving' | 'paused' | 'gameover'
-      let state = "title";
+      let fallAccumulator = 0;
+      let lastFrameTime = 0;
+      let isResolving = false;
+      let isPaused = false;
+      let isGameOver = false;
+      let isStarted = false;
 
-      // 盤面サイズを少し控えめにして、NEXT枠と右上ボタンの余白をしっかり確保
       function resizeCanvas() {
         const maxH = window.innerHeight - 115;
         const maxW = window.innerWidth - 110;
@@ -454,32 +470,21 @@
         return { main: randomColor(), sub: randomColor() };
       }
 
-      function stopGravityTimer() {
-        if (gravityTimerId !== null) {
-          clearInterval(gravityTimerId);
-          gravityTimerId = null;
-        }
+      function canPlay() {
+        return isStarted && !isResolving && !isPaused && !isGameOver && current !== null;
       }
 
-      function startGravityTimer() {
-        stopGravityTimer();
-        if (dropInterval > 0) {
-          gravityTimerId = setInterval(() => {
-            if (state === "playing" && current) {
-              stepGravity();
-            }
-          }, dropInterval);
-        }
-      }
-
-      function initGame() {
-        stopGravityTimer();
+      function startNewSession() {
         board = createEmptyBoard();
         nextQueue = [generatePair(), generatePair()];
+        fallAccumulator = 0;
+        lastFrameTime = performance.now();
+        isResolving = false;
+        isPaused = false;
+        isGameOver = false;
+        isStarted = true;
         gameoverModal.classList.remove("open");
-        state = "playing";
         spawnPiece();
-        startGravityTimer();
         render();
       }
 
@@ -495,11 +500,11 @@
           main: pair.main,
           sub: pair.sub
         };
+        fallAccumulator = 0;
 
         if (board[1][2] !== 0) {
           current = null;
-          stopGravityTimer();
-          state = "gameover";
+          isGameOver = true;
           gameoverModal.classList.add("open");
         }
       }
@@ -522,7 +527,7 @@
       }
 
       function moveHorizontal(dx) {
-        if (state !== "playing" || !current) return false;
+        if (!canPlay()) return false;
         if (isValidPos(current.x + dx, current.y, current.rot)) {
           current.x += dx;
           render();
@@ -532,7 +537,7 @@
       }
 
       function rotate(dir) {
-        if (state !== "playing" || !current) return;
+        if (!canPlay()) return;
         const nextRot = (current.rot + dir + 4) % 4;
 
         if (isValidPos(current.x, current.y, nextRot)) {
@@ -556,11 +561,12 @@
         }
       }
 
-      // 自動落下・下ドラッグ1段落下
-      function stepGravity() {
-        if (state !== "playing" || !current) return false;
+      // 1段落下（自動落下・下ドラッグ共用）
+      function dropOneStep() {
+        if (!canPlay()) return false;
         if (isValidPos(current.x, current.y + 1, current.rot)) {
           current.y += 1;
+          fallAccumulator = 0;
           render();
           return true;
         } else {
@@ -570,17 +576,17 @@
       }
 
       function hardDrop() {
-        if (state !== "playing" || !current) return;
+        if (!canPlay()) return;
         while (isValidPos(current.x, current.y + 1, current.rot)) {
           current.y += 1;
         }
+        fallAccumulator = 0;
         render();
         lockPiece();
       }
 
       function lockPiece() {
         if (!current) return;
-        stopGravityTimer();
         const sub = getSubPos(current.x, current.y, current.rot);
         board[current.y][current.x] = current.main;
         if (sub.y >= 0 && sub.y < TOTAL_ROWS) {
@@ -660,12 +666,12 @@
       }
 
       async function resolveBoard() {
-        state = "resolving";
+        isResolving = true;
         let chainCount = 0;
 
         if (applyGravity()) {
           render();
-          await sleep(160);
+          await sleep(150);
         }
 
         while (true) {
@@ -679,22 +685,35 @@
             board[m.y][m.x] = 0;
           }
           render();
-          await sleep(240);
+          await sleep(230);
 
           if (applyGravity()) {
             render();
-            await sleep(180);
+            await sleep(170);
           }
         }
 
-        if (settingsModal.classList.contains("open")) {
-          state = "paused";
-        } else {
-          state = "playing";
+        isResolving = false;
+        if (!isPaused && !isGameOver && isStarted) {
           spawnPiece();
-          startGravityTimer();
           render();
         }
+      }
+
+      // メインループ（毎フレーム確実に経過時間を加算して自動落下）
+      function loop(now) {
+        const dt = Math.min(100, now - lastFrameTime);
+        lastFrameTime = now;
+
+        if (canPlay() && dropInterval > 0) {
+          fallAccumulator += dt;
+          while (fallAccumulator >= dropInterval && canPlay()) {
+            fallAccumulator -= dropInterval;
+            if (!dropOneStep()) break;
+          }
+        }
+
+        requestAnimationFrame(loop);
       }
 
       function drawPuyo(context, px, py, size, colorId, neighbors = null, alpha = 1) {
@@ -799,8 +818,8 @@
           }
         }
 
-        if (current && (state === "playing" || state === "paused")) {
-          if (showGhost) {
+        if (current && isStarted && !isGameOver) {
+          if (showGhost && !isResolving) {
             let ghostY = current.y;
             while (isValidPos(current.x, ghostY + 1, current.rot)) {
               ghostY++;
@@ -821,6 +840,7 @@
       }
 
       // フリック・ドラッグ・タップ操作
+      let activePointerId = null;
       let touchStartX = 0;
       let touchStartY = 0;
       let lastMoveX = 0;
@@ -831,9 +851,11 @@
       const appEl = document.getElementById("app");
 
       appEl.addEventListener("pointerdown", (e) => {
+        if (!canPlay() || activePointerId !== null) return;
         if (e.target.closest("button") || settingsModal.classList.contains("open") || gameoverModal.classList.contains("open")) {
           return;
         }
+        activePointerId = e.pointerId;
         touchStartX = e.clientX;
         touchStartY = e.clientY;
         lastMoveX = e.clientX;
@@ -843,7 +865,7 @@
       });
 
       appEl.addEventListener("pointermove", (e) => {
-        if (touchStartTime === 0 || state !== "playing") return;
+        if (e.pointerId !== activePointerId || !canPlay()) return;
 
         const dx = e.clientX - lastMoveX;
         const dy = e.clientY - lastMoveY;
@@ -858,20 +880,21 @@
         }
 
         if (dy >= stepY) {
-          stepGravity();
+          dropOneStep();
           lastMoveY = e.clientY;
           hasMoved = true;
         }
       });
 
-      appEl.addEventListener("pointerup", (e) => {
-        if (touchStartTime === 0) return;
+      function endPointer(e) {
+        if (e.pointerId !== activePointerId) return;
+        activePointerId = null;
+
+        if (!canPlay()) return;
+
         const totalDx = e.clientX - touchStartX;
         const totalDy = e.clientY - touchStartY;
         const elapsed = performance.now() - touchStartTime;
-        touchStartTime = 0;
-
-        if (state !== "playing") return;
 
         if (totalDy > 45 && Math.abs(totalDy) > Math.abs(totalDx) * 1.5 && elapsed < 260) {
           hardDrop();
@@ -885,43 +908,57 @@
             rotate(1);
           }
         }
-      });
+      }
+
+      appEl.addEventListener("pointerup", endPointer);
+      appEl.addEventListener("pointercancel", endPointer);
 
       // PCキーボード補助
       window.addEventListener("keydown", (e) => {
-        if (state !== "playing") return;
+        if (!canPlay()) return;
         if (e.key === "ArrowLeft") moveHorizontal(-1);
         else if (e.key === "ArrowRight") moveHorizontal(1);
-        else if (e.key === "ArrowDown") stepGravity();
+        else if (e.key === "ArrowDown") dropOneStep();
         else if (e.key === "ArrowUp") hardDrop();
         else if (e.key === "z" || e.key === "Z") rotate(-1);
         else if (e.key === "x" || e.key === "X") rotate(1);
       });
 
-      // スタートボタン
-      startBtn.addEventListener("click", () => {
-        titleScreen.classList.add("hidden");
-        resizeCanvas();
-        initGame();
+      // タイトル画面：色数選択
+      document.querySelectorAll(".title-color-opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".title-color-opt").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          colorCount = Number(btn.dataset.colors);
+        });
       });
 
-      // 設定モーダル制御
-      openSettingsBtn.addEventListener("click", () => {
-        if (state === "playing") {
-          state = "paused";
-          stopGravityTimer();
-        }
+      // タイトル画面：スタート
+      startBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        titleScreen.classList.add("hidden");
+        resizeCanvas();
+        startNewSession();
+      });
+
+      // プレイ中設定モーダル
+      openSettingsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!isStarted) return;
+        isPaused = true;
         settingsModal.classList.add("open");
       });
 
-      closeSettingsBtn.addEventListener("click", () => {
+      closeSettingsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
         settingsModal.classList.remove("open");
-        if (state === "paused") {
-          state = "playing";
-          if (!current) spawnPiece();
-          startGravityTimer();
-          render();
+        isPaused = false;
+        lastFrameTime = performance.now();
+        fallAccumulator = 0;
+        if (!isResolving && !isGameOver && !current) {
+          spawnPiece();
         }
+        render();
       });
 
       document.querySelectorAll(".speed-opt").forEach((btn) => {
@@ -929,19 +966,7 @@
           document.querySelectorAll(".speed-opt").forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
           dropInterval = Number(btn.dataset.speed);
-          if (state === "playing") {
-            startGravityTimer();
-          }
-        });
-      });
-
-      document.querySelectorAll(".color-opt").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          document.querySelectorAll(".color-opt").forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          colorCount = Number(btn.dataset.colors);
-          nextQueue = [generatePair(), generatePair()];
-          renderNext();
+          fallAccumulator = 0;
         });
       });
 
@@ -956,15 +981,17 @@
 
       resetBtn.addEventListener("click", () => {
         settingsModal.classList.remove("open");
-        initGame();
+        startNewSession();
       });
 
       retryBtn.addEventListener("click", () => {
-        initGame();
+        startNewSession();
       });
 
       window.addEventListener("resize", resizeCanvas);
       resizeCanvas();
+      lastFrameTime = performance.now();
+      requestAnimationFrame(loop);
     })();
   </script>
 </body>
