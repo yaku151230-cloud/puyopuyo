@@ -177,24 +177,50 @@
       display: block;
     }
 
+    /* 本家風 連鎖カットイン演出 */
     #chain-pop {
       position: absolute;
-      top: 45%;
+      top: 38%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(34, 38, 46, 0.9);
-      color: #ffffff;
-      font-size: 20px;
-      font-weight: 800;
-      padding: 7px 16px;
-      border-radius: 999px;
+      transform: translate(-50%, -50%) scale(0.3);
+      font-size: 24px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 0.04em;
+      color: #fde047;
+      -webkit-text-stroke: 1.5px #22262e;
+      text-shadow: 0 4px 0 rgba(34, 38, 46, 0.85), 0 8px 18px rgba(0, 0, 0, 0.25);
       pointer-events: none;
-      display: none;
+      opacity: 0;
       white-space: nowrap;
+      z-index: 15;
     }
 
     #chain-pop.show {
-      display: block;
+      animation: puyoChainPop 0.82s cubic-bezier(0.22, 1.45, 0.36, 1) forwards;
+    }
+
+    @keyframes puyoChainPop {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -30%) scale(0.35) rotate(-6deg);
+      }
+      22% {
+        opacity: 1;
+        transform: translate(-50%, -54%) scale(1.22) rotate(3deg);
+      }
+      45% {
+        opacity: 1;
+        transform: translate(-50%, -48%) scale(0.96) rotate(-1deg);
+      }
+      75% {
+        opacity: 1;
+        transform: translate(-50%, -52%) scale(1.04) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -68%) scale(0.9) rotate(0deg);
+      }
     }
 
     .hint {
@@ -291,7 +317,7 @@
     <div class="stage">
       <div class="board-box">
         <canvas id="board-canvas"></canvas>
-        <div id="chain-pop">2 連鎖!</div>
+        <div id="chain-pop">2連鎖!</div>
       </div>
 
       <div class="next-box">
@@ -396,6 +422,12 @@
     let gameOver = false;
     let fallTimer = null;
 
+    // 演出用状態
+    let poppingCells = new Map(); // "x,y" -> { scaleX, scaleY, color }
+    let particles = []; // 弾ける粒エフェクト
+    let landingSquash = []; // 着地スクイーズ { x, y, timer }
+    let animFrameId = null;
+
     function fitBoard() {
       const maxH = window.innerHeight - 110;
       const maxW = window.innerWidth - 105;
@@ -434,7 +466,6 @@
       }, dropMs);
     }
 
-    // スタート・リセット・リトライすべてで共通して使う初期化メソッド
     function resetBoardState() {
       running = true;
       settingsOpen = false;
@@ -442,6 +473,9 @@
       clearFallTimer();
       board = makeBoard();
       nextQueue = [makePair(), makePair()];
+      poppingCells.clear();
+      particles = [];
+      landingSquash = [];
       resolving = false;
       gameOver = false;
       gameoverModal.classList.remove("open");
@@ -541,15 +575,24 @@
       fixPiece();
     }
 
+    function addLandingSquash(x, y) {
+      if (y < HIDDEN_ROWS) return;
+      landingSquash = landingSquash.filter((item) => !(item.x === x && item.y === y));
+      landingSquash.push({ x, y, frames: 5 });
+    }
+
     function fixPiece() {
       if (!current) return;
       clearFallTimer();
       const s = subPos(current.x, current.y, current.rot);
       board[current.y][current.x] = current.main;
+      addLandingSquash(current.x, current.y);
       if (s.y >= 0 && s.y < TOTAL_ROWS) {
         board[s.y][s.x] = current.sub;
+        addLandingSquash(s.x, s.y);
       }
       current = null;
+      startEffectLoop();
       resolveChains();
     }
 
@@ -612,11 +655,92 @@
 
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+    // 本家ぷよぷよ風の連鎖カットイン（連鎖数に応じて色とサイズを変化）
     function showChainPop(n) {
       if (n < 2) return;
-      chainPop.textContent = `${n} 連鎖!`;
+      chainPop.textContent = `${n}連鎖!`;
+
+      const scaleBoost = Math.min(1.45, 1 + (n - 2) * 0.08);
+      chainPop.style.fontSize = `${Math.round(24 * scaleBoost)}px`;
+
+      if (n >= 5) {
+        chainPop.style.color = "#ff6b6b";
+      } else if (n === 4) {
+        chainPop.style.color = "#fb923c";
+      } else if (n === 3) {
+        chainPop.style.color = "#facc15";
+      } else {
+        chainPop.style.color = "#fde047";
+      }
+
+      chainPop.classList.remove("show");
+      void chainPop.offsetWidth;
       chainPop.classList.add("show");
-      setTimeout(() => chainPop.classList.remove("show"), 750);
+    }
+
+    // 消えるぷよの膨張＆弾けパーティクル生成
+    function spawnPopBurst(x, y, colorId) {
+      const col = COLORS[colorId];
+      if (!col) return;
+      const cx = x * cellSize + cellSize / 2;
+      const cy = (y - HIDDEN_ROWS) * cellSize + cellSize / 2;
+
+      for (let i = 0; i < 7; i++) {
+        const angle = (Math.PI * 2 * i) / 7 + (Math.random() - 0.5) * 0.4;
+        const speed = 1.6 + Math.random() * 2.4;
+        particles.push({
+          x: cx,
+          y: cy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1.2,
+          r: Math.max(3, cellSize * (0.09 + Math.random() * 0.06)),
+          color: col.fill,
+          alpha: 1,
+          life: 1
+        });
+      }
+    }
+
+    function startEffectLoop() {
+      if (animFrameId !== null) return;
+      const step = () => {
+        let active = false;
+
+        // 弾ける粒の更新
+        if (particles.length > 0) {
+          active = true;
+          for (const pt of particles) {
+            pt.x += pt.vx;
+            pt.y += pt.vy;
+            pt.vy += 0.14;
+            pt.life -= 0.055;
+            pt.alpha = Math.max(0, pt.life);
+          }
+          particles = particles.filter((pt) => pt.life > 0);
+        }
+
+        // 着地スクイーズの更新
+        if (landingSquash.length > 0) {
+          active = true;
+          for (const sq of landingSquash) {
+            sq.frames -= 1;
+          }
+          landingSquash = landingSquash.filter((sq) => sq.frames > 0);
+        }
+
+        if (poppingCells.size > 0) {
+          active = true;
+        }
+
+        draw();
+
+        if (active) {
+          animFrameId = requestAnimationFrame(step);
+        } else {
+          animFrameId = null;
+        }
+      };
+      animFrameId = requestAnimationFrame(step);
     }
 
     async function resolveChains() {
@@ -625,7 +749,7 @@
 
       if (dropFloating()) {
         draw();
-        await wait(150);
+        await wait(140);
       }
 
       while (true) {
@@ -635,15 +759,34 @@
         chain += 1;
         showChainPop(chain);
 
+        // 1. 消えるぷよをぷるんと膨らませる（本家風の予兆）
+        poppingCells.clear();
         for (const m of matches) {
-          board[m.y][m.x] = 0;
+          poppingCells.set(`${m.x},${m.y}`, {
+            scaleX: 1.26,
+            scaleY: 1.26,
+            color: board[m.y][m.x]
+          });
         }
+        startEffectLoop();
         draw();
-        await wait(230);
+        await wait(150);
 
+        // 2. パッと消去＋粒が弾ける
+        for (const m of matches) {
+          const c = board[m.y][m.x];
+          board[m.y][m.x] = 0;
+          spawnPopBurst(m.x, m.y, c);
+        }
+        poppingCells.clear();
+        startEffectLoop();
+        draw();
+        await wait(140);
+
+        // 3. 上のぷよが落ちてくる
         if (dropFloating()) {
           draw();
-          await wait(170);
+          await wait(160);
         }
       }
 
@@ -655,7 +798,7 @@
       }
     }
 
-    function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1) {
+    function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1, scaleX = 1, scaleY = 1) {
       if (!colorId) return;
       const col = COLORS[colorId];
       const r = size * 0.42;
@@ -664,6 +807,10 @@
 
       c2d.save();
       c2d.globalAlpha = alpha;
+      c2d.translate(cx, cy);
+      c2d.scale(scaleX, scaleY);
+      c2d.translate(-cx, -cy);
+
       c2d.fillStyle = col.fill;
       c2d.strokeStyle = col.stroke;
       c2d.lineWidth = 2;
@@ -714,6 +861,16 @@
       paintPuyo(nextCtx, x2, 70 + s2 - 2, s2, p2.main);
     }
 
+    function getSquashScale(x, y) {
+      const sq = landingSquash.find((item) => item.x === x && item.y === y);
+      if (!sq) return { sx: 1, sy: 1 };
+      const ratio = sq.frames / 5;
+      return {
+        sx: 1 + 0.14 * ratio,
+        sy: 1 - 0.12 * ratio
+      };
+    }
+
     function draw() {
       ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
@@ -753,7 +910,11 @@
             left: x > 0 && board[y][x - 1] === c,
             right: x < COLS - 1 && board[y][x + 1] === c
           };
-          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, link);
+          const pop = poppingCells.get(`${x},${y}`);
+          const sq = getSquashScale(x, y);
+          const sx = pop ? pop.scaleX : sq.sx;
+          const sy = pop ? pop.scaleY : sq.sy;
+          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, link, 1, sx, sy);
         }
       }
 
@@ -774,6 +935,17 @@
         paintPuyo(ctx, current.x * cellSize, (current.y - HIDDEN_ROWS) * cellSize, cellSize, current.main);
         paintPuyo(ctx, s.x * cellSize, (s.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub);
       }
+
+      // 弾けるパーティクル描画
+      for (const pt of particles) {
+        ctx.save();
+        ctx.globalAlpha = pt.alpha;
+        ctx.fillStyle = pt.color;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
     }
 
     // タイトル色数選択
@@ -785,7 +957,7 @@
       });
     });
 
-    // スタート（リセットと同じメソッドを適用）
+    // スタート
     startBtn.addEventListener("click", () => {
       titleScreen.classList.add("hidden");
       resetBoardState();
