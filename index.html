@@ -177,7 +177,7 @@
       display: block;
     }
 
-    /* 本家風 連鎖カットイン演出 */
+    /* 連鎖カットイン演出 */
     #chain-pop {
       position: absolute;
       top: 38%;
@@ -390,14 +390,14 @@
     const HIDDEN_ROWS = 1;
     const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS;
 
-    // ぷにっと柔らかそうなカラーパレット（明るい中心・深い輪郭）
+    // 目なしの柔らかいゼリー・水滴カラーパレット
     const COLORS = [
       null,
-      { light: "#ff8a8a", fill: "#ef4444", deep: "#b91c1c" }, // 赤
-      { light: "#93c5fd", fill: "#3b82f6", deep: "#1d4ed8" }, // 青
-      { light: "#86efac", fill: "#22c55e", deep: "#15803d" }, // 緑
-      { light: "#fde047", fill: "#eab308", deep: "#a16207" }, // 黄
-      { light: "#d8b4fe", fill: "#a855f7", deep: "#7e22ce" }  // 紫
+      { light: "#ffb4b4", fill: "#f87171", deep: "#dc2626" }, // やわらか赤
+      { light: "#bfdbfe", fill: "#60a5fa", deep: "#2563eb" }, // やわらか青
+      { light: "#bbf7d0", fill: "#4ade80", deep: "#16a34a" }, // やわらか緑
+      { light: "#fef08a", fill: "#facc15", deep: "#ca8a04" }, // やわらか黄
+      { light: "#e9d5ff", fill: "#c084fc", deep: "#9333ea" }  // やわらか紫
     ];
 
     const DIRS = [
@@ -826,15 +826,15 @@
       }
     }
 
-    // ぷにっと柔らかそうなスライム/本家ぷよぷよ風描画
-    function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1, scaleX = 1, scaleY = 1, showFace = true) {
+    // 目なしのぷにっとしたゼリー・水滴風描画
+    function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1, scaleX = 1, scaleY = 1) {
       if (!colorId) return;
       const col = COLORS[colorId];
       const cx = px + size / 2;
       const cy = py + size / 2;
       const rx = size * 0.44;
       const ryTop = size * 0.41;
-      const ryBot = size * 0.46; // 下側を少しぷっくりさせて柔らかさを出す
+      const ryBot = size * 0.46;
 
       c2d.save();
       c2d.globalAlpha = alpha;
@@ -842,7 +842,7 @@
       c2d.scale(scaleX, scaleY);
       c2d.translate(-cx, -cy);
 
-      // 同色連結ブリッジ（柔らかい帯）
+      // 同色連結ブリッジ
       if (link) {
         const bw = rx * 1.15;
         c2d.fillStyle = col.fill;
@@ -852,7 +852,7 @@
         if (link.right) c2d.fillRect(cx - 1, cy - bw / 2, size / 2 + 1, bw);
       }
 
-      // ぷにっとした本体パス（上部は丸く、下部は少し膨らむ）
+      // ぷにっとした本体シルエット
       c2d.beginPath();
       c2d.moveTo(cx - rx, cy);
       c2d.bezierCurveTo(cx - rx, cy - ryTop * 1.12, cx + rx, cy - ryTop * 1.12, cx + rx, cy);
@@ -869,48 +869,29 @@
         size * 0.55
       );
       grad.addColorStop(0, col.light);
-      grad.addColorStop(0.55, col.fill);
+      grad.addColorStop(0.58, col.fill);
       grad.addColorStop(1, col.deep);
 
       c2d.fillStyle = grad;
       c2d.fill();
 
-      // ぷにぷに瞳（小さいサイズやゴースト時は省略）
-      if (showFace && size >= 24 && alpha > 0.5) {
-        const eyeOffsetY = ryTop * 0.05;
-        const eyeSpacing = rx * 0.36;
-        const eyeR = Math.max(2.2, size * 0.075);
-
-        for (const side of [-1, 1]) {
-          const ex = cx + side * eyeSpacing;
-          const ey = cy + eyeOffsetY;
-
-          // 白目
-          c2d.fillStyle = "#ffffff";
-          c2d.beginPath();
-          c2d.arc(ex, ey, eyeR * 1.15, 0, Math.PI * 2);
-          c2d.fill();
-
-          // 黒目
-          c2d.fillStyle = "#1e293b";
-          c2d.beginPath();
-          c2d.arc(ex + side * 0.5, ey + 0.5, eyeR * 0.78, 0, Math.PI * 2);
-          c2d.fill();
-        }
-      }
-
-      // ぷるんとした上部のツヤ・ハイライト
-      c2d.fillStyle = "rgba(255, 255, 255, 0.55)";
+      // やわらかいゼリー・水滴の光沢ハイライト（2粒でぷるん感）
+      c2d.fillStyle = "rgba(255, 255, 255, 0.65)";
       c2d.beginPath();
       c2d.ellipse(
-        cx - rx * 0.34,
-        cy - ryTop * 0.42,
-        rx * 0.22,
-        ryTop * 0.13,
+        cx - rx * 0.32,
+        cy - ryTop * 0.36,
+        rx * 0.24,
+        ryTop * 0.14,
         -0.55,
         0,
         Math.PI * 2
       );
+      c2d.fill();
+
+      c2d.fillStyle = "rgba(255, 255, 255, 0.45)";
+      c2d.beginPath();
+      c2d.arc(cx - rx * 0.06, cy - ryTop * 0.56, Math.max(1.5, rx * 0.09), 0, Math.PI * 2);
       c2d.fill();
 
       c2d.restore();
@@ -925,8 +906,8 @@
 
       const s1 = 28;
       const x1 = (nextCanvas.width - s1) / 2;
-      paintPuyo(nextCtx, x1, 2, s1, p1.sub, null, 1, 1, 1, true);
-      paintPuyo(nextCtx, x1, 2 + s1 - 2, s1, p1.main, null, 1, 1, 1, true);
+      paintPuyo(nextCtx, x1, 2, s1, p1.sub);
+      paintPuyo(nextCtx, x1, 2 + s1 - 2, s1, p1.main);
 
       nextCtx.strokeStyle = "#e5e7eb";
       nextCtx.lineWidth = 1;
@@ -937,8 +918,8 @@
 
       const s2 = 20;
       const x2 = (nextCanvas.width - s2) / 2;
-      paintPuyo(nextCtx, x2, 70, s2, p2.sub, null, 1, 1, 1, false);
-      paintPuyo(nextCtx, x2, 70 + s2 - 2, s2, p2.main, null, 1, 1, 1, false);
+      paintPuyo(nextCtx, x2, 70, s2, p2.sub);
+      paintPuyo(nextCtx, x2, 70 + s2 - 2, s2, p2.main);
     }
 
     function getSquashScale(x, y) {
@@ -994,7 +975,7 @@
           const sq = getSquashScale(x, y);
           const sx = pop ? pop.scaleX : sq.sx;
           const sy = pop ? pop.scaleY : sq.sy;
-          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, link, 1, sx, sy, true);
+          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, link, 1, sx, sy);
         }
       }
 
@@ -1004,16 +985,16 @@
           while (canPlace(current.x, gy + 1, current.rot)) gy += 1;
           const gs = subPos(current.x, gy, current.rot);
           if (gy >= HIDDEN_ROWS) {
-            paintPuyo(ctx, current.x * cellSize, (gy - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.22, 1, 1, false);
+            paintPuyo(ctx, current.x * cellSize, (gy - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.22);
           }
           if (gs.y >= HIDDEN_ROWS) {
-            paintPuyo(ctx, gs.x * cellSize, (gs.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.22, 1, 1, false);
+            paintPuyo(ctx, gs.x * cellSize, (gs.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.22);
           }
         }
 
         const s = subPos(current.x, current.y, current.rot);
-        paintPuyo(ctx, current.x * cellSize, (current.y - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 1, 1, 1, true);
-        paintPuyo(ctx, s.x * cellSize, (s.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 1, 1, 1, true);
+        paintPuyo(ctx, current.x * cellSize, (current.y - HIDDEN_ROWS) * cellSize, cellSize, current.main);
+        paintPuyo(ctx, s.x * cellSize, (s.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub);
       }
 
       for (const pt of particles) {
