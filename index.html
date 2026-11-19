@@ -232,7 +232,7 @@
       letter-spacing: 0.02em;
     }
 
-    /* 設定モーダル（シックなカード＆行リストスタイル） */
+    /* 設定モーダル */
     .modal-bg {
       position: fixed;
       inset: 0;
@@ -529,13 +529,13 @@
           <rect width="512" height="512" rx="116" fill="url(#bgGrad)"/>
           <rect x="14" y="14" width="484" height="484" rx="104" fill="none" stroke="#252b37" stroke-width="4"/>
 
-          <path d="M112 215 C112 145, 224 145, 224 215 C224 275, 112 275, 112 215 Z" fill="url(#puyoRed)"/>
+          <circle cx="168" cy="212" r="56" fill="url(#puyoRed)"/>
           <ellipse cx="148" cy="186" rx="22" ry="12" transform="rotate(-28 148 186)" fill="rgba(255,255,255,0.68)"/>
 
-          <path d="M286 235 C286 165, 398 165, 398 235 C398 295, 286 295, 286 235 Z" fill="url(#puyoBlue)"/>
+          <circle cx="342" cy="232" r="56" fill="url(#puyoBlue)"/>
           <ellipse cx="322" cy="206" rx="22" ry="12" transform="rotate(-28 322 206)" fill="rgba(255,255,255,0.68)"/>
 
-          <path d="M196 325 C196 250, 316 250, 316 325 C316 392, 196 392, 196 325 Z" fill="url(#puyoGreen)"/>
+          <circle cx="256" cy="322" r="60" fill="url(#puyoGreen)"/>
           <ellipse cx="234" cy="292" rx="24" ry="13" transform="rotate(-28 234 292)" fill="rgba(255,255,255,0.72)"/>
         </svg>
       `.trim();
@@ -1029,28 +1029,51 @@
       }
     }
 
-    // ぷよの輪郭を基本としつつ、同色が隣り合う方向へほんの少しだけふっくら膨らませて「ぴとっ」とくっつき感を出す
-    function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1, scaleX = 1, scaleY = 1) {
+    // くっついている同色ぷよ同士を「太い線」でつなぐ描画
+    function drawThickConnector(c2d, x1, y1, x2, y2, size, colorId) {
+      const col = COLORS[colorId];
+      if (!col) return;
+
+      const cx1 = x1 * size + size / 2;
+      const cy1 = (y1 - HIDDEN_ROWS) * size + size / 2;
+      const cx2 = x2 * size + size / 2;
+      const cy2 = (y2 - HIDDEN_ROWS) * size + size / 2;
+
+      // ぷよの横の半径（size * 0.51）を基準にした太い線
+      const r = size * 0.51;
+      const lineWidth = r * 1.45;
+
+      c2d.save();
+      c2d.beginPath();
+      c2d.moveTo(cx1, cy1);
+      c2d.lineTo(cx2, cy2);
+      c2d.lineCap = "round";
+      c2d.lineWidth = lineWidth;
+
+      const grad = c2d.createLinearGradient(
+        Math.min(cx1, cx2),
+        Math.min(cy1, cy2) - lineWidth / 2,
+        Math.max(cx1, cx2),
+        Math.max(cy1, cy2) + lineWidth / 2
+      );
+      grad.addColorStop(0, col.light);
+      grad.addColorStop(0.35, col.fill);
+      grad.addColorStop(1, col.deep);
+
+      c2d.strokeStyle = grad;
+      c2d.stroke();
+      c2d.restore();
+    }
+
+    // 今の横の太さ（r = size * 0.51）を基準にした「まんまる（真円）」のぷよ描画
+    function paintPuyo(c2d, px, py, size, colorId, alpha = 1, scaleX = 1, scaleY = 1) {
       if (!colorId) return;
       const col = COLORS[colorId];
       const cx = px + size / 2;
       const cy = py + size / 2;
 
-      const rx = size * 0.51;
-      const ryTop = size * 0.46;
-      const ryBot = size * 0.53;
-
-      // ほんのちょっとくっつくための微増分（線や出っ張りにならない範囲）
-      const nudge = size * 0.045;
-      const nLeft = link && link.left ? nudge : 0;
-      const nRight = link && link.right ? nudge : 0;
-      const nUp = link && link.up ? nudge : 0;
-      const nDown = link && link.down ? nudge : 0;
-
-      const leftX = cx - rx - nLeft;
-      const rightX = cx + rx + nRight;
-      const topY = cy - ryTop * 1.15 - nUp;
-      const botY = cy + ryBot * 1.06 + nDown;
+      // 今の横の太さ（size * 0.51）を基準とした真円の半径
+      const r = size * 0.51;
 
       c2d.save();
       c2d.globalAlpha = alpha;
@@ -1058,41 +1081,32 @@
       c2d.scale(scaleX, scaleY);
       c2d.translate(-cx, -cy);
 
-      const traceBody = () => {
+      const traceCircle = () => {
         c2d.beginPath();
-        c2d.moveTo(leftX, cy);
-        c2d.bezierCurveTo(
-          leftX, topY,
-          rightX, topY,
-          rightX, cy
-        );
-        c2d.bezierCurveTo(
-          rightX + nRight * 0.25, botY,
-          leftX - nLeft * 0.25, botY,
-          leftX, cy
-        );
-        c2d.closePath();
+        c2d.arc(cx, cy, r, 0, Math.PI * 2);
       };
 
-      traceBody();
-      const baseGrad = c2d.createLinearGradient(cx, topY, cx, botY);
+      // まんまる本体
+      traceCircle();
+      const baseGrad = c2d.createLinearGradient(cx, cy - r, cx, cy + r);
       baseGrad.addColorStop(0, col.light);
       baseGrad.addColorStop(0.32, col.fill);
       baseGrad.addColorStop(1, col.deep);
       c2d.fillStyle = baseGrad;
       c2d.fill();
 
+      // 内部の立体感＆バウンス光＆ソフトハイライト
       c2d.save();
-      traceBody();
+      traceCircle();
       c2d.clip();
 
       const innerLight = c2d.createRadialGradient(
-        cx - rx * 0.34,
-        cy - ryTop * 0.42,
+        cx - r * 0.34,
+        cy - r * 0.38,
         size * 0.02,
-        cx - rx * 0.18,
-        cy - ryTop * 0.18,
-        rx * 1.15
+        cx - r * 0.18,
+        cy - r * 0.18,
+        r * 1.15
       );
       innerLight.addColorStop(0, "rgba(255, 255, 255, 0.34)");
       innerLight.addColorStop(0.65, "rgba(255, 255, 255, 0.03)");
@@ -1100,36 +1114,37 @@
       c2d.fillStyle = innerLight;
       c2d.fillRect(px - size * 0.15, py - size * 0.15, size * 1.3, size * 1.3);
 
-      const bounceGrad = c2d.createLinearGradient(cx, cy + ryBot * 0.25, cx, botY);
+      const bounceGrad = c2d.createLinearGradient(cx, cy + r * 0.25, cx, cy + r);
       bounceGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
       bounceGrad.addColorStop(1, col.bounce);
       c2d.fillStyle = bounceGrad;
       c2d.fillRect(px - size * 0.15, py - size * 0.15, size * 1.3, size * 1.3);
 
       const softSpec = c2d.createRadialGradient(
-        cx - rx * 0.34,
-        cy - ryTop * 0.38,
+        cx - r * 0.34,
+        cy - r * 0.34,
         1,
-        cx - rx * 0.34,
-        cy - ryTop * 0.38,
-        rx * 0.42
+        cx - r * 0.34,
+        cy - r * 0.34,
+        r * 0.42
       );
       softSpec.addColorStop(0, "rgba(255, 255, 255, 0.42)");
       softSpec.addColorStop(1, "rgba(255, 255, 255, 0)");
       c2d.fillStyle = softSpec;
       c2d.beginPath();
-      c2d.arc(cx - rx * 0.34, cy - ryTop * 0.38, rx * 0.42, 0, Math.PI * 2);
+      c2d.arc(cx - r * 0.34, cy - r * 0.34, r * 0.42, 0, Math.PI * 2);
       c2d.fill();
 
       c2d.restore();
 
+      // 小さなツヤ点
       c2d.fillStyle = "rgba(255, 255, 255, 0.78)";
       c2d.beginPath();
       c2d.ellipse(
-        cx - rx * 0.34,
-        cy - ryTop * 0.38,
-        Math.max(1.8, rx * 0.15),
-        Math.max(1.1, ryTop * 0.085),
+        cx - r * 0.34,
+        cy - r * 0.34,
+        Math.max(1.8, r * 0.15),
+        Math.max(1.1, r * 0.085),
         -0.55,
         0,
         Math.PI * 2
@@ -1203,21 +1218,30 @@
       ctx.lineTo(dx - 6, dy + 6);
       ctx.stroke();
 
+      // 1. くっついている同色ぷよ同士を「太い線」で先に描画
       for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
           const c = board[y][x];
           if (!c) continue;
-          const link = {
-            up: y > HIDDEN_ROWS && board[y - 1][x] === c,
-            down: y < TOTAL_ROWS - 1 && board[y + 1][x] === c,
-            left: x > 0 && board[y][x - 1] === c,
-            right: x < COLS - 1 && board[y][x + 1] === c
-          };
+          if (x + 1 < COLS && board[y][x + 1] === c) {
+            drawThickConnector(ctx, x, y, x + 1, y, cellSize, c);
+          }
+          if (y + 1 < TOTAL_ROWS && board[y + 1][x] === c) {
+            drawThickConnector(ctx, x, y, x, y + 1, cellSize, c);
+          }
+        }
+      }
+
+      // 2. 今の横の太さ基準の「まんまるぷよ」を描画
+      for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const c = board[y][x];
+          if (!c) continue;
           const pop = poppingCells.get(`${x},${y}`);
           const sq = getSquashScale(x, y);
           const sx = pop ? pop.scaleX : sq.sx;
           const sy = pop ? pop.scaleY : sq.sy;
-          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, link, 1, sx, sy);
+          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, 1, sx, sy);
         }
       }
 
@@ -1227,10 +1251,10 @@
           while (canPlace(current.x, gy + 1, current.rot)) gy += 1;
           const gs = subPos(current.x, gy, current.rot);
           if (gy >= HIDDEN_ROWS) {
-            paintPuyo(ctx, current.x * cellSize, (gy - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.22);
+            paintPuyo(ctx, current.x * cellSize, (gy - HIDDEN_ROWS) * cellSize, cellSize, current.main, 0.22);
           }
           if (gs.y >= HIDDEN_ROWS) {
-            paintPuyo(ctx, gs.x * cellSize, (gs.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.22);
+            paintPuyo(ctx, gs.x * cellSize, (gs.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, 0.22);
           }
         }
 
