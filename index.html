@@ -1029,17 +1029,28 @@
       }
     }
 
-    // 線やブリッジを一切描かず、一つ一つのぷよを大きくふっくら描画して隣り合う丸同士を自然に重ねる
-    function paintPuyo(c2d, px, py, size, colorId, alpha = 1, scaleX = 1, scaleY = 1) {
+    // ぷよの輪郭を基本としつつ、同色が隣り合う方向へほんの少しだけふっくら膨らませて「ぴとっ」とくっつき感を出す
+    function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1, scaleX = 1, scaleY = 1) {
       if (!colorId) return;
       const col = COLORS[colorId];
       const cx = px + size / 2;
       const cy = py + size / 2;
 
-      // 1マスいっぱいに近い大きめのふっくらぷよ（本家のように存在感を出す）
       const rx = size * 0.51;
       const ryTop = size * 0.46;
       const ryBot = size * 0.53;
+
+      // ほんのちょっとくっつくための微増分（線や出っ張りにならない範囲）
+      const nudge = size * 0.045;
+      const nLeft = link && link.left ? nudge : 0;
+      const nRight = link && link.right ? nudge : 0;
+      const nUp = link && link.up ? nudge : 0;
+      const nDown = link && link.down ? nudge : 0;
+
+      const leftX = cx - rx - nLeft;
+      const rightX = cx + rx + nRight;
+      const topY = cy - ryTop * 1.15 - nUp;
+      const botY = cy + ryBot * 1.06 + nDown;
 
       c2d.save();
       c2d.globalAlpha = alpha;
@@ -1049,22 +1060,28 @@
 
       const traceBody = () => {
         c2d.beginPath();
-        c2d.moveTo(cx - rx, cy);
-        c2d.bezierCurveTo(cx - rx, cy - ryTop * 1.15, cx + rx, cy - ryTop * 1.15, cx + rx, cy);
-        c2d.bezierCurveTo(cx + rx * 1.06, cy + ryBot * 1.06, cx - rx * 1.06, cy + ryBot * 1.06, cx - rx, cy);
+        c2d.moveTo(leftX, cy);
+        c2d.bezierCurveTo(
+          leftX, topY,
+          rightX, topY,
+          rightX, cy
+        );
+        c2d.bezierCurveTo(
+          rightX + nRight * 0.25, botY,
+          leftX - nLeft * 0.25, botY,
+          leftX, cy
+        );
         c2d.closePath();
       };
 
-      // ぷよ本体
       traceBody();
-      const baseGrad = c2d.createLinearGradient(cx, cy - ryTop, cx, cy + ryBot);
+      const baseGrad = c2d.createLinearGradient(cx, topY, cx, botY);
       baseGrad.addColorStop(0, col.light);
       baseGrad.addColorStop(0.32, col.fill);
       baseGrad.addColorStop(1, col.deep);
       c2d.fillStyle = baseGrad;
       c2d.fill();
 
-      // 内部の立体感・バウンス光・ソフトハイライト
       c2d.save();
       traceBody();
       c2d.clip();
@@ -1081,13 +1098,13 @@
       innerLight.addColorStop(0.65, "rgba(255, 255, 255, 0.03)");
       innerLight.addColorStop(1, "rgba(0, 0, 0, 0)");
       c2d.fillStyle = innerLight;
-      c2d.fillRect(px - size * 0.1, py - size * 0.1, size * 1.2, size * 1.2);
+      c2d.fillRect(px - size * 0.15, py - size * 0.15, size * 1.3, size * 1.3);
 
-      const bounceGrad = c2d.createLinearGradient(cx, cy + ryBot * 0.25, cx, cy + ryBot * 1.05);
+      const bounceGrad = c2d.createLinearGradient(cx, cy + ryBot * 0.25, cx, botY);
       bounceGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
       bounceGrad.addColorStop(1, col.bounce);
       c2d.fillStyle = bounceGrad;
-      c2d.fillRect(px - size * 0.1, py - size * 0.1, size * 1.2, size * 1.2);
+      c2d.fillRect(px - size * 0.15, py - size * 0.15, size * 1.3, size * 1.3);
 
       const softSpec = c2d.createRadialGradient(
         cx - rx * 0.34,
@@ -1106,7 +1123,6 @@
 
       c2d.restore();
 
-      // 小さなツヤ点
       c2d.fillStyle = "rgba(255, 255, 255, 0.78)";
       c2d.beginPath();
       c2d.ellipse(
@@ -1191,11 +1207,17 @@
         for (let x = 0; x < COLS; x++) {
           const c = board[y][x];
           if (!c) continue;
+          const link = {
+            up: y > HIDDEN_ROWS && board[y - 1][x] === c,
+            down: y < TOTAL_ROWS - 1 && board[y + 1][x] === c,
+            left: x > 0 && board[y][x - 1] === c,
+            right: x < COLS - 1 && board[y][x + 1] === c
+          };
           const pop = poppingCells.get(`${x},${y}`);
           const sq = getSquashScale(x, y);
           const sx = pop ? pop.scaleX : sq.sx;
           const sy = pop ? pop.scaleY : sq.sy;
-          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, 1, sx, sy);
+          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, link, 1, sx, sy);
         }
       }
 
@@ -1205,10 +1227,10 @@
           while (canPlace(current.x, gy + 1, current.rot)) gy += 1;
           const gs = subPos(current.x, gy, current.rot);
           if (gy >= HIDDEN_ROWS) {
-            paintPuyo(ctx, current.x * cellSize, (gy - HIDDEN_ROWS) * cellSize, cellSize, current.main, 0.22);
+            paintPuyo(ctx, current.x * cellSize, (gy - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.22);
           }
           if (gs.y >= HIDDEN_ROWS) {
-            paintPuyo(ctx, gs.x * cellSize, (gs.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, 0.22);
+            paintPuyo(ctx, gs.x * cellSize, (gs.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.22);
           }
         }
 
