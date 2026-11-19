@@ -39,6 +39,31 @@
       display: none;
     }
 
+    #title-settings-btn {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      border: 1px solid #272c37;
+      background: #14171d;
+      color: #e5e7eb;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 110;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    #title-settings-btn:active {
+      background: #1f242e;
+    }
+
     .title-logo {
       margin: 0;
       font-size: 36px;
@@ -47,18 +72,8 @@
       color: #f9fafb;
     }
 
-    .title-actions {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      max-width: 240px;
-    }
-
     .start-btn {
-      width: 100%;
-      padding: 14px 28px;
+      padding: 14px 48px;
       font-size: 16px;
       font-weight: 700;
       letter-spacing: 0.1em;
@@ -72,23 +87,6 @@
 
     .start-btn:active {
       background: #d1d5db;
-    }
-
-    .title-sub-btn {
-      width: 100%;
-      padding: 11px 24px;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: #d1d5db;
-      background: #14171d;
-      border: 1px solid #262b36;
-      border-radius: 999px;
-      cursor: pointer;
-    }
-
-    .title-sub-btn:active {
-      background: #1c2029;
     }
 
     /* ゲーム画面 */
@@ -294,6 +292,10 @@
       margin-bottom: 10px;
     }
 
+    .setting-card.hidden-setting {
+      display: none;
+    }
+
     .setting-card-head {
       display: flex;
       align-items: center;
@@ -363,6 +365,10 @@
       cursor: pointer;
     }
 
+    .act-btn.hidden-action {
+      display: none;
+    }
+
     .act-reset {
       background: rgba(239, 68, 68, 0.13);
       border-color: rgba(239, 68, 68, 0.35);
@@ -392,12 +398,9 @@
 <body>
   <!-- タイトル画面 -->
   <div id="title-screen">
+    <button type="button" id="title-settings-btn">設定</button>
     <h1 class="title-logo">ぷよぷよ</h1>
-
-    <div class="title-actions">
-      <button type="button" id="start-btn" class="start-btn">スタート</button>
-      <button type="button" id="title-settings-btn" class="title-sub-btn">設定</button>
-    </div>
+    <button type="button" id="start-btn" class="start-btn">スタート</button>
   </div>
 
   <!-- ゲーム画面 -->
@@ -440,7 +443,7 @@
         </div>
       </div>
 
-      <div class="setting-card">
+      <div id="color-setting-card" class="setting-card">
         <div class="setting-card-head">
           <span class="label">ぷよの色数</span>
           <span id="color-val-label" class="current-val">4色</span>
@@ -477,6 +480,7 @@
 
       <div class="actions">
         <button type="button" id="reset-btn" class="act-btn act-reset">盤面をリセット</button>
+        <button type="button" id="modal-title-btn" class="act-btn act-secondary">タイトル画面へ</button>
         <button type="button" id="close-settings-btn" class="act-btn act-close">閉じる</button>
       </div>
     </div>
@@ -527,8 +531,10 @@
     const settingsBtn = document.getElementById("settings-btn");
     const settingsModal = document.getElementById("settings-modal");
     const modalContextBadge = document.getElementById("modal-context-badge");
+    const colorSettingCard = document.getElementById("color-setting-card");
     const closeSettingsBtn = document.getElementById("close-settings-btn");
     const resetBtn = document.getElementById("reset-btn");
+    const modalTitleBtn = document.getElementById("modal-title-btn");
     const gameoverModal = document.getElementById("gameover-modal");
     const retryBtn = document.getElementById("retry-btn");
     const backTitleBtn = document.getElementById("back-title-btn");
@@ -1121,11 +1127,15 @@
     function openSettings(fromTitle) {
       if (fromTitle) {
         modalContextBadge.textContent = "TITLE";
-        resetBtn.style.display = "none";
+        colorSettingCard.classList.remove("hidden-setting");
+        resetBtn.classList.add("hidden-action");
+        modalTitleBtn.classList.add("hidden-action");
       } else {
         if (!running || gameOver) return;
         modalContextBadge.textContent = "GAME";
-        resetBtn.style.display = "block";
+        colorSettingCard.classList.add("hidden-setting");
+        resetBtn.classList.remove("hidden-action");
+        modalTitleBtn.classList.remove("hidden-action");
         settingsOpen = true;
         clearFallTimer();
       }
@@ -1157,6 +1167,7 @@
     });
 
     closeSettingsBtn.addEventListener("click", closeSettings);
+    modalTitleBtn.addEventListener("click", goToTitle);
 
     // 落下スピード
     document.querySelectorAll(".speed-choice").forEach((btn) => {
@@ -1169,22 +1180,13 @@
       });
     });
 
-    // ぷよの色数（タイトル・ゲーム画面 共用）
+    // ぷよの色数（タイトル設定のみ表示）
     document.querySelectorAll(".color-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".color-choice").forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         colorCount = Number(btn.dataset.colors);
         colorValLabel.textContent = btn.dataset.label;
-
-        // すでに存在するネクストの色が新しい色数を超えていたら再生成
-        if (nextQueue.length > 0) {
-          nextQueue = nextQueue.map((p) => ({
-            main: p.main > colorCount ? randColor() : p.main,
-            sub: p.sub > colorCount ? randColor() : p.sub
-          }));
-          drawNext();
-        }
       });
     });
 
