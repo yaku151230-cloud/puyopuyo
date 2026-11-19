@@ -587,11 +587,11 @@
 
     const COLORS = [
       null,
-      { light: "#fecaca", fill: "#ef4444", deep: "#7f1d1d", bounce: "rgba(254, 202, 202, 0.28)", rim: "rgba(255, 228, 230, 0.35)" },
-      { light: "#bfdbfe", fill: "#3b82f6", deep: "#1e3a8a", bounce: "rgba(191, 219, 254, 0.28)", rim: "rgba(219, 234, 254, 0.35)" },
-      { light: "#bbf7d0", fill: "#22c55e", deep: "#14532d", bounce: "rgba(187, 247, 208, 0.28)", rim: "rgba(220, 252, 231, 0.35)" },
-      { light: "#fef08a", fill: "#eab308", deep: "#713f12", bounce: "rgba(254, 240, 138, 0.28)", rim: "rgba(254, 249, 195, 0.35)" },
-      { light: "#e9d5ff", fill: "#a855f7", deep: "#581c87", bounce: "rgba(233, 213, 255, 0.28)", rim: "rgba(243, 232, 255, 0.35)" }
+      { light: "#fecaca", fill: "#ef4444", deep: "#7f1d1d", bounce: "rgba(254, 202, 202, 0.28)" },
+      { light: "#bfdbfe", fill: "#3b82f6", deep: "#1e3a8a", bounce: "rgba(191, 219, 254, 0.28)" },
+      { light: "#bbf7d0", fill: "#22c55e", deep: "#14532d", bounce: "rgba(187, 247, 208, 0.28)" },
+      { light: "#fef08a", fill: "#eab308", deep: "#713f12", bounce: "rgba(254, 240, 138, 0.28)" },
+      { light: "#e9d5ff", fill: "#a855f7", deep: "#581c87", bounce: "rgba(233, 213, 255, 0.28)" }
     ];
 
     const DIRS = [
@@ -655,9 +655,9 @@
     let animFrameId = null;
 
     function fitBoard() {
-      const maxH = window.innerHeight - 110;
-      const maxW = window.innerWidth - 105;
-      cellSize = Math.max(26, Math.min(44, Math.floor(Math.min(maxW / COLS, maxH / VISIBLE_ROWS))));
+      const maxH = window.innerHeight - 104;
+      const maxW = window.innerWidth - 96;
+      cellSize = Math.max(28, Math.min(48, Math.floor(Math.min(maxW / COLS, maxH / VISIBLE_ROWS))));
       boardCanvas.width = COLS * cellSize;
       boardCanvas.height = VISIBLE_ROWS * cellSize;
       draw();
@@ -1029,104 +1029,17 @@
       }
     }
 
-    // 本家風：2つのぷよの境界で水滴/ゼリーが引っ張り合ってできる「なめらかな合流くびれ」を描く
-    // 右隣・下隣とのペアごとに1回だけ描くことで、重なりや線が出ないようにする
-    function drawPairBridge(c2d, x1, y1, x2, y2, size, colorId) {
-      const col = COLORS[colorId];
-      if (!col) return;
-
-      const cx1 = x1 * size + size / 2;
-      const cy1 = (y1 - HIDDEN_ROWS) * size + size / 2;
-      const cx2 = x2 * size + size / 2;
-      const cy2 = (y2 - HIDDEN_ROWS) * size + size / 2;
-
-      const r = size * 0.42;
-      const pinch = size * 0.14; // くびれの絞り込み量（小さいほど「くびれ」らしく、大きいほど太くつながる）
-
-      c2d.save();
-
-      if (y1 === y2) {
-        // 横並びの連結（x1 < x2）
-        const leftX = Math.min(cx1, cx2);
-        const rightX = Math.max(cx1, cx2);
-        const midX = (leftX + rightX) / 2;
-
-        // 2つの円が交差する上下の接点付近から、中央でくびれる砂時計型ブリッジ
-        const dx = rightX - leftX;
-        const halfSpan = Math.min(dx * 0.46, r * 0.86);
-        const startX = midX - halfSpan;
-        const endX = midX + halfSpan;
-        const edgeY = r * 0.56;
-        const midHalfH = Math.max(size * 0.14, edgeY - pinch);
-
-        c2d.beginPath();
-        c2d.moveTo(startX, cy1 - edgeY);
-        c2d.bezierCurveTo(
-          midX - halfSpan * 0.42, cy1 - midHalfH,
-          midX + halfSpan * 0.42, cy1 - midHalfH,
-          endX, cy1 - edgeY
-        );
-        c2d.lineTo(endX, cy1 + edgeY);
-        c2d.bezierCurveTo(
-          midX + halfSpan * 0.42, cy1 + midHalfH,
-          midX - halfSpan * 0.42, cy1 + midHalfH,
-          startX, cy1 + edgeY
-        );
-        c2d.closePath();
-
-        const grad = c2d.createLinearGradient(midX, cy1 - r, midX, cy1 + r);
-        grad.addColorStop(0, col.light);
-        grad.addColorStop(0.35, col.fill);
-        grad.addColorStop(1, col.deep);
-        c2d.fillStyle = grad;
-        c2d.fill();
-      } else if (x1 === x2) {
-        // 縦並びの連結（y1 < y2）
-        const topY = Math.min(cy1, cy2);
-        const botY = Math.max(cy1, cy2);
-        const midY = (topY + botY) / 2;
-
-        const dy = botY - topY;
-        const halfSpan = Math.min(dy * 0.46, r * 0.86);
-        const startY = midY - halfSpan;
-        const endY = midY + halfSpan;
-        const edgeX = r * 0.56;
-        const midHalfW = Math.max(size * 0.14, edgeX - pinch);
-
-        c2d.beginPath();
-        c2d.moveTo(cx1 - edgeX, startY);
-        c2d.bezierCurveTo(
-          cx1 - midHalfW, midY - halfSpan * 0.42,
-          cx1 - midHalfW, midY + halfSpan * 0.42,
-          cx1 - edgeX, endY
-        );
-        c2d.lineTo(cx1 + edgeX, endY);
-        c2d.bezierCurveTo(
-          cx1 + midHalfW, midY + halfSpan * 0.42,
-          cx1 + midHalfW, midY - halfSpan * 0.42,
-          cx1 + edgeX, startY
-        );
-        c2d.closePath();
-
-        const grad = c2d.createLinearGradient(cx1 - r, midY, cx1 + r, midY);
-        grad.addColorStop(0, col.light);
-        grad.addColorStop(0.5, col.fill);
-        grad.addColorStop(1, col.deep);
-        c2d.fillStyle = grad;
-        c2d.fill();
-      }
-
-      c2d.restore();
-    }
-
+    // 線やブリッジを一切描かず、一つ一つのぷよを大きくふっくら描画して隣り合う丸同士を自然に重ねる
     function paintPuyo(c2d, px, py, size, colorId, alpha = 1, scaleX = 1, scaleY = 1) {
       if (!colorId) return;
       const col = COLORS[colorId];
       const cx = px + size / 2;
       const cy = py + size / 2;
-      const rx = size * 0.44;
-      const ryTop = size * 0.41;
-      const ryBot = size * 0.46;
+
+      // 1マスいっぱいに近い大きめのふっくらぷよ（本家のように存在感を出す）
+      const rx = size * 0.51;
+      const ryTop = size * 0.46;
+      const ryBot = size * 0.53;
 
       c2d.save();
       c2d.globalAlpha = alpha;
@@ -1134,52 +1047,47 @@
       c2d.scale(scaleX, scaleY);
       c2d.translate(-cx, -cy);
 
-      if (alpha > 0.4) {
-        c2d.fillStyle = "rgba(0, 0, 0, 0.34)";
-        c2d.beginPath();
-        c2d.ellipse(cx, cy + ryBot * 0.96, rx * 0.76, Math.max(2, size * 0.075), 0, 0, Math.PI * 2);
-        c2d.fill();
-      }
-
       const traceBody = () => {
         c2d.beginPath();
         c2d.moveTo(cx - rx, cy);
-        c2d.bezierCurveTo(cx - rx, cy - ryTop * 1.12, cx + rx, cy - ryTop * 1.12, cx + rx, cy);
-        c2d.bezierCurveTo(cx + rx * 1.05, cy + ryBot * 1.05, cx - rx * 1.05, cy + ryBot * 1.05, cx - rx, cy);
+        c2d.bezierCurveTo(cx - rx, cy - ryTop * 1.15, cx + rx, cy - ryTop * 1.15, cx + rx, cy);
+        c2d.bezierCurveTo(cx + rx * 1.06, cy + ryBot * 1.06, cx - rx * 1.06, cy + ryBot * 1.06, cx - rx, cy);
         c2d.closePath();
       };
 
+      // ぷよ本体
       traceBody();
       const baseGrad = c2d.createLinearGradient(cx, cy - ryTop, cx, cy + ryBot);
       baseGrad.addColorStop(0, col.light);
-      baseGrad.addColorStop(0.28, col.fill);
+      baseGrad.addColorStop(0.32, col.fill);
       baseGrad.addColorStop(1, col.deep);
       c2d.fillStyle = baseGrad;
       c2d.fill();
 
+      // 内部の立体感・バウンス光・ソフトハイライト
       c2d.save();
       traceBody();
       c2d.clip();
 
       const innerLight = c2d.createRadialGradient(
-        cx - rx * 0.35,
+        cx - rx * 0.34,
         cy - ryTop * 0.42,
         size * 0.02,
-        cx - rx * 0.2,
-        cy - ryTop * 0.2,
+        cx - rx * 0.18,
+        cy - ryTop * 0.18,
         rx * 1.15
       );
-      innerLight.addColorStop(0, "rgba(255, 255, 255, 0.36)");
-      innerLight.addColorStop(0.65, "rgba(255, 255, 255, 0.04)");
+      innerLight.addColorStop(0, "rgba(255, 255, 255, 0.34)");
+      innerLight.addColorStop(0.65, "rgba(255, 255, 255, 0.03)");
       innerLight.addColorStop(1, "rgba(0, 0, 0, 0)");
       c2d.fillStyle = innerLight;
-      c2d.fillRect(px, py, size, size);
+      c2d.fillRect(px - size * 0.1, py - size * 0.1, size * 1.2, size * 1.2);
 
       const bounceGrad = c2d.createLinearGradient(cx, cy + ryBot * 0.25, cx, cy + ryBot * 1.05);
       bounceGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
       bounceGrad.addColorStop(1, col.bounce);
       c2d.fillStyle = bounceGrad;
-      c2d.fillRect(px, py, size, size);
+      c2d.fillRect(px - size * 0.1, py - size * 0.1, size * 1.2, size * 1.2);
 
       const softSpec = c2d.createRadialGradient(
         cx - rx * 0.34,
@@ -1189,7 +1097,7 @@
         cy - ryTop * 0.38,
         rx * 0.42
       );
-      softSpec.addColorStop(0, "rgba(255, 255, 255, 0.45)");
+      softSpec.addColorStop(0, "rgba(255, 255, 255, 0.42)");
       softSpec.addColorStop(1, "rgba(255, 255, 255, 0)");
       c2d.fillStyle = softSpec;
       c2d.beginPath();
@@ -1198,18 +1106,14 @@
 
       c2d.restore();
 
-      traceBody();
-      c2d.strokeStyle = col.rim;
-      c2d.lineWidth = 1;
-      c2d.stroke();
-
+      // 小さなツヤ点
       c2d.fillStyle = "rgba(255, 255, 255, 0.78)";
       c2d.beginPath();
       c2d.ellipse(
         cx - rx * 0.34,
         cy - ryTop * 0.38,
-        Math.max(1.8, rx * 0.16),
-        Math.max(1.1, ryTop * 0.09),
+        Math.max(1.8, rx * 0.15),
+        Math.max(1.1, ryTop * 0.085),
         -0.55,
         0,
         Math.PI * 2
@@ -1283,21 +1187,6 @@
       ctx.lineTo(dx - 6, dy + 6);
       ctx.stroke();
 
-      // 1. まず隣り合う同色ぷよの「くびれブリッジ」を先に描画（ぷよ本体の後ろで自然になじませる）
-      for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
-        for (let x = 0; x < COLS; x++) {
-          const c = board[y][x];
-          if (!c) continue;
-          if (x + 1 < COLS && board[y][x + 1] === c) {
-            drawPairBridge(ctx, x, y, x + 1, y, cellSize, c);
-          }
-          if (y + 1 < TOTAL_ROWS && board[y + 1][x] === c) {
-            drawPairBridge(ctx, x, y, x, y + 1, cellSize, c);
-          }
-        }
-      }
-
-      // 2. その上に各ぷよ本体を描画
       for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
           const c = board[y][x];
