@@ -15,8 +15,8 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background: #f4f5f7;
-      color: #22262e;
+      background: #0b0d10;
+      color: #f3f4f6;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
     }
@@ -25,7 +25,7 @@
     #title-screen {
       position: fixed;
       inset: 0;
-      background: #f4f5f7;
+      background: radial-gradient(circle at 50% 25%, #171b22 0%, #0b0d10 72%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -41,24 +41,27 @@
 
     .title-logo {
       margin: 0;
-      font-size: 36px;
-      font-weight: 900;
-      letter-spacing: 0.08em;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: #f9fafb;
     }
 
     .title-card {
       width: 100%;
       max-width: 300px;
-      background: #ffffff;
-      border: 1px solid #d1d5db;
+      background: #14171d;
+      border: 1px solid #262b35;
       border-radius: 14px;
       padding: 14px 16px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
     }
 
     .label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
-      color: #6b7280;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
       margin-bottom: 8px;
     }
 
@@ -77,29 +80,36 @@
     .chip-btn {
       padding: 9px 6px;
       border-radius: 10px;
-      border: 1px solid #d1d5db;
-      background: #f4f5f7;
-      color: #22262e;
+      border: 1px solid #2a303c;
+      background: #1b1f27;
+      color: #d1d5db;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
     }
 
     .chip-btn.active {
-      background: #3b82f6;
-      border-color: #3b82f6;
-      color: #ffffff;
+      background: #e5e7eb;
+      border-color: #f9fafb;
+      color: #0b0d10;
     }
 
     .start-btn {
-      padding: 14px 44px;
-      font-size: 17px;
-      font-weight: 800;
-      color: #ffffff;
-      background: #22262e;
-      border: none;
+      padding: 13px 44px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #0b0d10;
+      background: #f9fafb;
+      border: 1px solid #ffffff;
       border-radius: 999px;
       cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .start-btn:active {
+      background: #d1d5db;
     }
 
     /* ゲーム画面 */
@@ -113,6 +123,7 @@
       padding: 60px 12px 14px;
       position: relative;
       touch-action: none;
+      background: radial-gradient(circle at 50% 20%, #151920 0%, #0b0d10 75%);
     }
 
     #settings-btn {
@@ -121,17 +132,23 @@
       right: 12px;
       width: 44px;
       height: 44px;
-      border-radius: 12px;
-      border: 1px solid #d1d5db;
-      background: #ffffff;
-      color: #22262e;
-      font-size: 13px;
-      font-weight: 800;
+      border-radius: 11px;
+      border: 1px solid #272c37;
+      background: #14171d;
+      color: #e5e7eb;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 40;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    #settings-btn:active {
+      background: #1f242e;
     }
 
     .stage {
@@ -143,21 +160,22 @@
 
     .board-box {
       position: relative;
-      background: #ffffff;
-      border: 1px solid #d1d5db;
+      background: #12151b;
+      border: 1px solid #262b36;
       border-radius: 12px;
       padding: 6px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6);
     }
 
     #board-canvas {
       display: block;
-      background: #ebedf0;
+      background: #0d1015;
       border-radius: 8px;
     }
 
     .next-box {
-      background: #ffffff;
-      border: 1px solid #d1d5db;
+      background: #12151b;
+      border: 1px solid #262b36;
       border-radius: 12px;
       padding: 8px 6px;
       display: flex;
@@ -165,31 +183,33 @@
       align-items: center;
       gap: 6px;
       flex-shrink: 0;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
     }
 
     .next-title {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 800;
-      color: #6b7280;
+      letter-spacing: 0.1em;
+      color: #9ca3af;
     }
 
     #next-canvas {
       display: block;
     }
 
-    /* 連鎖カットイン演出 */
+    /* シックな連鎖カットイン演出 */
     #chain-pop {
       position: absolute;
       top: 38%;
       left: 50%;
       transform: translate(-50%, -50%) scale(0.3);
-      font-size: 24px;
+      font-size: 23px;
       font-weight: 900;
       font-style: italic;
-      letter-spacing: 0.04em;
-      color: #fde047;
-      -webkit-text-stroke: 1.5px #22262e;
-      text-shadow: 0 4px 0 rgba(34, 38, 46, 0.85), 0 8px 18px rgba(0, 0, 0, 0.25);
+      letter-spacing: 0.05em;
+      color: #f9fafb;
+      -webkit-text-stroke: 1px #090b0e;
+      text-shadow: 0 4px 14px rgba(0, 0, 0, 0.85);
       pointer-events: none;
       opacity: 0;
       white-space: nowrap;
@@ -203,11 +223,11 @@
     @keyframes puyoChainPop {
       0% {
         opacity: 0;
-        transform: translate(-50%, -30%) scale(0.35) rotate(-6deg);
+        transform: translate(-50%, -30%) scale(0.35) rotate(-5deg);
       }
       22% {
         opacity: 1;
-        transform: translate(-50%, -54%) scale(1.22) rotate(3deg);
+        transform: translate(-50%, -54%) scale(1.2) rotate(2deg);
       }
       45% {
         opacity: 1;
@@ -228,13 +248,14 @@
       font-size: 11px;
       color: #6b7280;
       text-align: center;
+      letter-spacing: 0.02em;
     }
 
     /* モーダル */
     .modal-bg {
       position: fixed;
       inset: 0;
-      background: rgba(17, 24, 39, 0.45);
+      background: rgba(3, 5, 8, 0.72);
       display: none;
       align-items: center;
       justify-content: center;
@@ -249,15 +270,20 @@
     .modal-panel {
       width: 100%;
       max-width: 310px;
-      background: #ffffff;
+      background: #14171d;
+      border: 1px solid #282e3a;
       border-radius: 16px;
       padding: 20px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
     }
 
     .modal-panel h2 {
       margin: 0 0 16px;
-      font-size: 17px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
       text-align: center;
+      color: #f9fafb;
     }
 
     .sec {
@@ -275,25 +301,28 @@
       width: 100%;
       padding: 11px;
       border-radius: 10px;
-      border: none;
-      font-size: 14px;
+      border: 1px solid transparent;
+      font-size: 13px;
       font-weight: 700;
+      letter-spacing: 0.04em;
       cursor: pointer;
     }
 
     .act-reset {
-      background: #fee2e2;
-      color: #dc2626;
+      background: rgba(239, 68, 68, 0.14);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
     }
 
     .act-secondary {
-      background: #e5e7eb;
-      color: #22262e;
+      background: #1e232d;
+      border-color: #2f3644;
+      color: #e5e7eb;
     }
 
     .act-close {
-      background: #22262e;
-      color: #ffffff;
+      background: #f3f4f6;
+      color: #0b0d10;
     }
   </style>
 </head>
@@ -390,14 +419,14 @@
     const HIDDEN_ROWS = 1;
     const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS;
 
-    // 目なしの柔らかいゼリー・水滴カラーパレット
+    // 黒背景に映える目なしの柔らかいゼリーカラー
     const COLORS = [
       null,
-      { light: "#ffb4b4", fill: "#f87171", deep: "#dc2626" }, // やわらか赤
-      { light: "#bfdbfe", fill: "#60a5fa", deep: "#2563eb" }, // やわらか青
-      { light: "#bbf7d0", fill: "#4ade80", deep: "#16a34a" }, // やわらか緑
-      { light: "#fef08a", fill: "#facc15", deep: "#ca8a04" }, // やわらか黄
-      { light: "#e9d5ff", fill: "#c084fc", deep: "#9333ea" }  // やわらか紫
+      { light: "#fca5a5", fill: "#ef4444", deep: "#991b1b" }, // 赤
+      { light: "#93c5fd", fill: "#3b82f6", deep: "#1e40af" }, // 青
+      { light: "#86efac", fill: "#22c55e", deep: "#166534" }, // 緑
+      { light: "#fde047", fill: "#eab308", deep: "#854d0e" }, // 黄
+      { light: "#d8b4fe", fill: "#a855f7", deep: "#6b21a8" }  // 紫
     ];
 
     const DIRS = [
@@ -694,17 +723,17 @@
       if (n < 2) return;
       chainPop.textContent = `${n}連鎖!`;
 
-      const scaleBoost = Math.min(1.45, 1 + (n - 2) * 0.08);
-      chainPop.style.fontSize = `${Math.round(24 * scaleBoost)}px`;
+      const scaleBoost = Math.min(1.42, 1 + (n - 2) * 0.08);
+      chainPop.style.fontSize = `${Math.round(23 * scaleBoost)}px`;
 
       if (n >= 5) {
-        chainPop.style.color = "#ff6b6b";
+        chainPop.style.color = "#fda4af";
       } else if (n === 4) {
-        chainPop.style.color = "#fb923c";
+        chainPop.style.color = "#fdba74";
       } else if (n === 3) {
-        chainPop.style.color = "#facc15";
-      } else {
         chainPop.style.color = "#fde047";
+      } else {
+        chainPop.style.color = "#f9fafb";
       }
 
       chainPop.classList.remove("show");
@@ -826,7 +855,6 @@
       }
     }
 
-    // 目なしのぷにっとしたゼリー・水滴風描画
     function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1, scaleX = 1, scaleY = 1) {
       if (!colorId) return;
       const col = COLORS[colorId];
@@ -842,7 +870,6 @@
       c2d.scale(scaleX, scaleY);
       c2d.translate(-cx, -cy);
 
-      // 同色連結ブリッジ
       if (link) {
         const bw = rx * 1.15;
         c2d.fillStyle = col.fill;
@@ -852,14 +879,12 @@
         if (link.right) c2d.fillRect(cx - 1, cy - bw / 2, size / 2 + 1, bw);
       }
 
-      // ぷにっとした本体シルエット
       c2d.beginPath();
       c2d.moveTo(cx - rx, cy);
       c2d.bezierCurveTo(cx - rx, cy - ryTop * 1.12, cx + rx, cy - ryTop * 1.12, cx + rx, cy);
       c2d.bezierCurveTo(cx + rx * 1.05, cy + ryBot * 1.05, cx - rx * 1.05, cy + ryBot * 1.05, cx - rx, cy);
       c2d.closePath();
 
-      // 柔らかいグラデーション塗り
       const grad = c2d.createRadialGradient(
         cx - rx * 0.25,
         cy - ryTop * 0.35,
@@ -875,8 +900,7 @@
       c2d.fillStyle = grad;
       c2d.fill();
 
-      // やわらかいゼリー・水滴の光沢ハイライト（2粒でぷるん感）
-      c2d.fillStyle = "rgba(255, 255, 255, 0.65)";
+      c2d.fillStyle = "rgba(255, 255, 255, 0.62)";
       c2d.beginPath();
       c2d.ellipse(
         cx - rx * 0.32,
@@ -889,7 +913,7 @@
       );
       c2d.fill();
 
-      c2d.fillStyle = "rgba(255, 255, 255, 0.45)";
+      c2d.fillStyle = "rgba(255, 255, 255, 0.42)";
       c2d.beginPath();
       c2d.arc(cx - rx * 0.06, cy - ryTop * 0.56, Math.max(1.5, rx * 0.09), 0, Math.PI * 2);
       c2d.fill();
@@ -909,7 +933,7 @@
       paintPuyo(nextCtx, x1, 2, s1, p1.sub);
       paintPuyo(nextCtx, x1, 2 + s1 - 2, s1, p1.main);
 
-      nextCtx.strokeStyle = "#e5e7eb";
+      nextCtx.strokeStyle = "#242933";
       nextCtx.lineWidth = 1;
       nextCtx.beginPath();
       nextCtx.moveTo(4, 62);
@@ -935,7 +959,8 @@
     function draw() {
       ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
-      ctx.strokeStyle = "#e0e3e8";
+      // 暗い盤面に馴染むシックなグリッド線
+      ctx.strokeStyle = "#191e27";
       ctx.lineWidth = 1;
       for (let x = 1; x < COLS; x++) {
         ctx.beginPath();
@@ -952,7 +977,7 @@
 
       const dx = 2 * cellSize + cellSize / 2;
       const dy = cellSize / 2;
-      ctx.strokeStyle = "rgba(220,38,38,0.35)";
+      ctx.strokeStyle = "rgba(248, 113, 113, 0.35)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(dx - 6, dy - 6);
