@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0b0d10" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ぷよぷよ" />
   <title>ぷよぷよ</title>
   <style>
     * {
@@ -498,18 +502,103 @@
   </div>
 
   <script>
+    // ホーム画面追加用アイコン（SVG Data URI + Web App Manifest）を生成
+    (function setupAppIcon() {
+      const svgIcon = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+          <defs>
+            <radialGradient id="bgGrad" cx="50%" cy="32%" r="70%">
+              <stop offset="0%" stop-color="#1d222c"/>
+              <stop offset="100%" stop-color="#0b0d10"/>
+            </radialGradient>
+            <radialGradient id="puyoRed" cx="35%" cy="28%" r="72%">
+              <stop offset="0%" stop-color="#fecaca"/>
+              <stop offset="48%" stop-color="#ef4444"/>
+              <stop offset="100%" stop-color="#7f1d1d"/>
+            </radialGradient>
+            <radialGradient id="puyoBlue" cx="35%" cy="28%" r="72%">
+              <stop offset="0%" stop-color="#bfdbfe"/>
+              <stop offset="48%" stop-color="#3b82f6"/>
+              <stop offset="100%" stop-color="#1e3a8a"/>
+            </radialGradient>
+            <radialGradient id="puyoGreen" cx="35%" cy="28%" r="72%">
+              <stop offset="0%" stop-color="#bbf7d0"/>
+              <stop offset="48%" stop-color="#22c55e"/>
+              <stop offset="100%" stop-color="#14532d"/>
+            </radialGradient>
+          </defs>
+          <rect width="512" height="512" rx="116" fill="url(#bgGrad)"/>
+          <rect x="14" y="14" width="484" height="484" rx="104" fill="none" stroke="#252b37" stroke-width="4"/>
+
+          <!-- 左上：赤 -->
+          <path d="M112 215 C112 145, 224 145, 224 215 C224 275, 112 275, 112 215 Z" fill="url(#puyoRed)"/>
+          <ellipse cx="148" cy="186" rx="22" ry="12" transform="rotate(-28 148 186)" fill="rgba(255,255,255,0.68)"/>
+
+          <!-- 右上：青 -->
+          <path d="M286 235 C286 165, 398 165, 398 235 C398 295, 286 295, 286 235 Z" fill="url(#puyoBlue)"/>
+          <ellipse cx="322" cy="206" rx="22" ry="12" transform="rotate(-28 322 206)" fill="rgba(255,255,255,0.68)"/>
+
+          <!-- 下中央：緑 -->
+          <path d="M196 325 C196 250, 316 250, 316 325 C316 392, 196 392, 196 325 Z" fill="url(#puyoGreen)"/>
+          <ellipse cx="234" cy="292" rx="24" ry="13" transform="rotate(-28 234 292)" fill="rgba(255,255,255,0.72)"/>
+        </svg>
+      `.trim();
+
+      const iconUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgIcon);
+
+      const appleLink = document.createElement("link");
+      appleLink.rel = "apple-touch-icon";
+      appleLink.href = iconUrl;
+      document.head.appendChild(appleLink);
+
+      const favLink = document.createElement("link");
+      favLink.rel = "icon";
+      favLink.type = "image/svg+xml";
+      favLink.href = iconUrl;
+      document.head.appendChild(favLink);
+
+      const manifestObj = {
+        name: "ぷよぷよ",
+        short_name: "ぷよぷよ",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#0b0d10",
+        theme_color: "#0b0d10",
+        icons: [
+          {
+            src: iconUrl,
+            sizes: "512x512",
+            type: "image/svg+xml",
+            purpose: "any maskable"
+          }
+        ]
+      };
+
+      try {
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: "application/manifest+json" });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.createElement("link");
+        manifestLink.rel = "manifest";
+        manifestLink.href = manifestUrl;
+        document.head.appendChild(manifestLink);
+      } catch (_) {
+        // Blob未対応環境でも apple-touch-icon と favicon は有効
+      }
+    })();
+
     const COLS = 6;
     const VISIBLE_ROWS = 12;
     const HIDDEN_ROWS = 1;
     const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS;
 
+    // 立体感・内部の奥行きを出すためのカラー設計
     const COLORS = [
       null,
-      { light: "#fca5a5", fill: "#ef4444", deep: "#991b1b" },
-      { light: "#93c5fd", fill: "#3b82f6", deep: "#1e40af" },
-      { light: "#86efac", fill: "#22c55e", deep: "#166534" },
-      { light: "#fde047", fill: "#eab308", deep: "#854d0e" },
-      { light: "#d8b4fe", fill: "#a855f7", deep: "#6b21a8" }
+      { light: "#fecaca", fill: "#ef4444", deep: "#7f1d1d", bounce: "rgba(254, 202, 202, 0.28)", rim: "rgba(255, 228, 230, 0.35)" },
+      { light: "#bfdbfe", fill: "#3b82f6", deep: "#1e3a8a", bounce: "rgba(191, 219, 254, 0.28)", rim: "rgba(219, 234, 254, 0.35)" },
+      { light: "#bbf7d0", fill: "#22c55e", deep: "#14532d", bounce: "rgba(187, 247, 208, 0.28)", rim: "rgba(220, 252, 231, 0.35)" },
+      { light: "#fef08a", fill: "#eab308", deep: "#713f12", bounce: "rgba(254, 240, 138, 0.28)", rim: "rgba(254, 249, 195, 0.35)" },
+      { light: "#e9d5ff", fill: "#a855f7", deep: "#581c87", bounce: "rgba(233, 213, 255, 0.28)", rim: "rgba(243, 232, 255, 0.35)" }
     ];
 
     const DIRS = [
@@ -947,6 +1036,7 @@
       }
     }
 
+    // 安っぽさを抑えた多層グラデーション＆内部反射のぷよ描画
     function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1, scaleX = 1, scaleY = 1) {
       if (!colorId) return;
       const col = COLORS[colorId];
@@ -962,8 +1052,17 @@
       c2d.scale(scaleX, scaleY);
       c2d.translate(-cx, -cy);
 
+      // 接地影（空間に浮いている安っぽさを軽減）
+      if (alpha > 0.4) {
+        c2d.fillStyle = "rgba(0, 0, 0, 0.36)";
+        c2d.beginPath();
+        c2d.ellipse(cx, cy + ryBot * 0.96, rx * 0.78, Math.max(2, size * 0.08), 0, 0, Math.PI * 2);
+        c2d.fill();
+      }
+
+      // 同色連結ブリッジ
       if (link) {
-        const bw = rx * 1.15;
+        const bw = rx * 1.12;
         c2d.fillStyle = col.fill;
         if (link.up) c2d.fillRect(cx - bw / 2, py, bw, size / 2 + 1);
         if (link.down) c2d.fillRect(cx - bw / 2, cy - 1, bw, size / 2 + 1);
@@ -971,43 +1070,85 @@
         if (link.right) c2d.fillRect(cx - 1, cy - bw / 2, size / 2 + 1, bw);
       }
 
-      c2d.beginPath();
-      c2d.moveTo(cx - rx, cy);
-      c2d.bezierCurveTo(cx - rx, cy - ryTop * 1.12, cx + rx, cy - ryTop * 1.12, cx + rx, cy);
-      c2d.bezierCurveTo(cx + rx * 1.05, cy + ryBot * 1.05, cx - rx * 1.05, cy + ryBot * 1.05, cx - rx, cy);
-      c2d.closePath();
+      const traceBody = () => {
+        c2d.beginPath();
+        c2d.moveTo(cx - rx, cy);
+        c2d.bezierCurveTo(cx - rx, cy - ryTop * 1.12, cx + rx, cy - ryTop * 1.12, cx + rx, cy);
+        c2d.bezierCurveTo(cx + rx * 1.05, cy + ryBot * 1.05, cx - rx * 1.05, cy + ryBot * 1.05, cx - rx, cy);
+        c2d.closePath();
+      };
 
-      const grad = c2d.createRadialGradient(
-        cx - rx * 0.25,
-        cy - ryTop * 0.35,
-        size * 0.04,
-        cx,
-        cy + ryBot * 0.1,
-        size * 0.55
-      );
-      grad.addColorStop(0, col.light);
-      grad.addColorStop(0.58, col.fill);
-      grad.addColorStop(1, col.deep);
-
-      c2d.fillStyle = grad;
+      // 本体ベース（濃い底色〜中間色〜上部の明暗）
+      traceBody();
+      const baseGrad = c2d.createLinearGradient(cx, cy - ryTop, cx, cy + ryBot);
+      baseGrad.addColorStop(0, col.light);
+      baseGrad.addColorStop(0.28, col.fill);
+      baseGrad.addColorStop(1, col.deep);
+      c2d.fillStyle = baseGrad;
       c2d.fill();
 
-      c2d.fillStyle = "rgba(255, 255, 255, 0.62)";
+      // クリップして内部の奥行き（左上光源＋下部のバウンス光）を重ねる
+      c2d.save();
+      traceBody();
+      c2d.clip();
+
+      const innerLight = c2d.createRadialGradient(
+        cx - rx * 0.35,
+        cy - ryTop * 0.42,
+        size * 0.02,
+        cx - rx * 0.2,
+        cy - ryTop * 0.2,
+        rx * 1.15
+      );
+      innerLight.addColorStop(0, "rgba(255, 255, 255, 0.36)");
+      innerLight.addColorStop(0.65, "rgba(255, 255, 255, 0.04)");
+      innerLight.addColorStop(1, "rgba(0, 0, 0, 0)");
+      c2d.fillStyle = innerLight;
+      c2d.fillRect(px, py, size, size);
+
+      // 下部からの反射光（ゼリー・半透明素材の質感）
+      const bounceGrad = c2d.createLinearGradient(cx, cy + ryBot * 0.25, cx, cy + ryBot * 1.05);
+      bounceGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
+      bounceGrad.addColorStop(1, col.bounce);
+      c2d.fillStyle = bounceGrad;
+      c2d.fillRect(px, py, size, size);
+
+      // 柔らかいぼかし風のハイライト
+      const softSpec = c2d.createRadialGradient(
+        cx - rx * 0.34,
+        cy - ryTop * 0.38,
+        1,
+        cx - rx * 0.34,
+        cy - ryTop * 0.38,
+        rx * 0.42
+      );
+      softSpec.addColorStop(0, "rgba(255, 255, 255, 0.45)");
+      softSpec.addColorStop(1, "rgba(255, 255, 255, 0)");
+      c2d.fillStyle = softSpec;
+      c2d.beginPath();
+      c2d.arc(cx - rx * 0.34, cy - ryTop * 0.38, rx * 0.42, 0, Math.PI * 2);
+      c2d.fill();
+
+      c2d.restore();
+
+      // 繊細なリムライン（境界をクッキリさせつつ硬さを出さない）
+      traceBody();
+      c2d.strokeStyle = col.rim;
+      c2d.lineWidth = 1;
+      c2d.stroke();
+
+      // 小さなツヤ点（くっきりした光点）
+      c2d.fillStyle = "rgba(255, 255, 255, 0.78)";
       c2d.beginPath();
       c2d.ellipse(
-        cx - rx * 0.32,
-        cy - ryTop * 0.36,
-        rx * 0.24,
-        ryTop * 0.14,
+        cx - rx * 0.34,
+        cy - ryTop * 0.38,
+        Math.max(1.8, rx * 0.16),
+        Math.max(1.1, ryTop * 0.09),
         -0.55,
         0,
         Math.PI * 2
       );
-      c2d.fill();
-
-      c2d.fillStyle = "rgba(255, 255, 255, 0.42)";
-      c2d.beginPath();
-      c2d.arc(cx - rx * 0.06, cy - ryTop * 0.56, Math.max(1.5, rx * 0.09), 0, Math.PI * 2);
       c2d.fill();
 
       c2d.restore();
