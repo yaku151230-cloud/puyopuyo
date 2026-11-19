@@ -5,22 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>ぷよぷよ</title>
   <style>
-    :root {
-      --bg: #f4f5f7;
-      --surface: #ffffff;
-      --board-bg: #ebedf0;
-      --grid-line: #e0e3e8;
-      --text: #22262e;
-      --subtext: #6b7280;
-      --accent: #3b82f6;
-      --border: #d1d5db;
-    }
-
     * {
       box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
@@ -28,24 +15,23 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background: var(--bg);
-      color: var(--text);
+      background: #f4f5f7;
+      color: #22262e;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
-      touch-action: none;
     }
 
     /* タイトル画面 */
     #title-screen {
       position: fixed;
       inset: 0;
-      background: var(--bg);
+      background: #f4f5f7;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 24px;
-      z-index: 60;
+      z-index: 100;
       padding: 24px;
     }
 
@@ -54,260 +40,229 @@
     }
 
     .title-logo {
+      margin: 0;
       font-size: 36px;
       font-weight: 900;
       letter-spacing: 0.08em;
-      color: var(--text);
-      margin: 0;
     }
 
-    .title-settings-card {
+    .title-card {
       width: 100%;
       max-width: 300px;
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: #ffffff;
+      border: 1px solid #d1d5db;
       border-radius: 14px;
       padding: 14px 16px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
     }
 
-    .title-setting-label {
+    .label {
       font-size: 12px;
       font-weight: 700;
-      color: var(--subtext);
+      color: #6b7280;
       margin-bottom: 8px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .chip-btn {
+      padding: 9px 6px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      background: #f4f5f7;
+      color: #22262e;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .chip-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #ffffff;
     }
 
     .start-btn {
       padding: 14px 44px;
       font-size: 17px;
-      font-weight: 700;
-      color: #fff;
-      background: var(--text);
+      font-weight: 800;
+      color: #ffffff;
+      background: #22262e;
       border: none;
       border-radius: 999px;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
-    }
-
-    .start-btn:active {
-      transform: scale(0.97);
     }
 
     /* ゲーム画面 */
-    #app {
+    #game-screen {
+      width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      height: 100%;
-      padding: 64px 12px 16px;
+      padding: 60px 12px 14px;
       position: relative;
+      touch-action: none;
     }
 
-    .settings-btn {
+    #settings-btn {
       position: fixed;
       top: 12px;
       right: 12px;
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #22262e;
+      font-size: 13px;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      padding: 0;
-      z-index: 20;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      z-index: 40;
     }
 
-    .settings-btn:active {
-      background: #e5e7eb;
-    }
-
-    .play-stage {
-      position: relative;
+    .stage {
       display: flex;
       align-items: flex-start;
       justify-content: center;
+      gap: 8px;
     }
 
-    .board-wrapper {
+    .board-box {
       position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--surface);
-      padding: 6px;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
       border-radius: 12px;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      padding: 6px;
     }
 
     #board-canvas {
       display: block;
-      background: var(--board-bg);
+      background: #ebedf0;
       border-radius: 8px;
     }
 
-    .next-column {
-      margin-left: 8px;
-      margin-top: 2px;
+    .next-box {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 8px 6px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 6px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px 6px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
       flex-shrink: 0;
     }
 
-    .next-label {
-      font-size: 9px;
+    .next-title {
+      font-size: 10px;
       font-weight: 800;
-      letter-spacing: 0.06em;
-      color: var(--subtext);
-      line-height: 1;
+      color: #6b7280;
     }
 
     #next-canvas {
       display: block;
     }
 
-    #chain-banner {
+    #chain-pop {
       position: absolute;
-      top: 50%;
+      top: 45%;
       left: 50%;
-      transform: translate(-50%, -50%) scale(0.8);
-      background: rgba(34, 38, 46, 0.88);
-      color: #fff;
+      transform: translate(-50%, -50%);
+      background: rgba(34, 38, 46, 0.9);
+      color: #ffffff;
       font-size: 20px;
       font-weight: 800;
       padding: 7px 16px;
       border-radius: 999px;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.18s ease, transform 0.18s ease;
+      display: none;
       white-space: nowrap;
     }
 
-    #chain-banner.show {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
+    #chain-pop.show {
+      display: block;
     }
 
     .hint {
       margin-top: 10px;
       font-size: 11px;
-      color: var(--subtext);
+      color: #6b7280;
       text-align: center;
     }
 
-    /* モーダル共通 */
-    .modal-backdrop {
+    /* モーダル */
+    .modal-bg {
       position: fixed;
       inset: 0;
       background: rgba(17, 24, 39, 0.45);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 50;
+      z-index: 80;
       padding: 20px;
     }
 
-    .modal-backdrop.open {
+    .modal-bg.open {
       display: flex;
     }
 
-    .modal {
+    .modal-panel {
       width: 100%;
       max-width: 310px;
-      background: var(--surface);
+      background: #ffffff;
       border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
     }
 
-    .modal h2 {
+    .modal-panel h2 {
       margin: 0 0 16px;
       font-size: 17px;
-      font-weight: 700;
       text-align: center;
     }
 
-    .setting-group {
+    .sec {
       margin-bottom: 16px;
     }
 
-    .setting-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--subtext);
-      margin-bottom: 6px;
-    }
-
-    .option-grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .option-grid-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-    }
-
-    .opt-btn {
-      padding: 9px 6px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-    }
-
-    .opt-btn.active {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-
-    .modal-actions {
+    .actions {
       display: flex;
       flex-direction: column;
       gap: 8px;
       margin-top: 18px;
     }
 
-    .btn {
+    .act-btn {
       width: 100%;
       padding: 11px;
       border-radius: 10px;
       border: none;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
     }
 
-    .btn-danger {
+    .act-reset {
       background: #fee2e2;
       color: #dc2626;
     }
 
-    .btn-primary {
-      background: var(--text);
-      color: #fff;
+    .act-close {
+      background: #22262e;
+      color: #ffffff;
     }
   </style>
 </head>
@@ -316,35 +271,31 @@
   <div id="title-screen">
     <h1 class="title-logo">ぷよぷよ</h1>
 
-    <div class="title-settings-card">
-      <div class="title-setting-label">ぷよの色数</div>
-      <div class="option-grid-3">
-        <button class="opt-btn title-color-opt" data-colors="3">3色</button>
-        <button class="opt-btn title-color-opt active" data-colors="4">4色</button>
-        <button class="opt-btn title-color-opt" data-colors="5">5色</button>
+    <div class="title-card">
+      <div class="label">ぷよの色数</div>
+      <div class="grid-3">
+        <button type="button" class="chip-btn color-choice" data-colors="3">3色</button>
+        <button type="button" class="chip-btn color-choice active" data-colors="4">4色</button>
+        <button type="button" class="chip-btn color-choice" data-colors="5">5色</button>
       </div>
     </div>
 
-    <button id="start-btn" class="start-btn">スタート</button>
+    <button type="button" id="start-btn" class="start-btn">スタート</button>
   </div>
 
-  <!-- 設定ボタン（プレイ中） -->
-  <button id="open-settings" class="settings-btn" aria-label="設定">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3"></circle>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-    </svg>
-  </button>
+  <!-- 設定ボタン -->
+  <button type="button" id="settings-btn">設定</button>
 
-  <div id="app">
-    <div class="play-stage">
-      <div class="board-wrapper">
+  <!-- ゲーム画面 -->
+  <div id="game-screen">
+    <div class="stage">
+      <div class="board-box">
         <canvas id="board-canvas"></canvas>
-        <div id="chain-banner">2 連鎖!</div>
+        <div id="chain-pop">2 連鎖!</div>
       </div>
 
-      <div class="next-column">
-        <span class="next-label">NEXT</span>
+      <div class="next-box">
+        <div class="next-title">NEXT</div>
         <canvas id="next-canvas" width="32" height="120"></canvas>
       </div>
     </div>
@@ -352,647 +303,613 @@
     <div class="hint">左右スワイプ: 移動 / 下ドラッグ・フリック: 落下 / 左右タップ: 回転</div>
   </div>
 
-  <!-- プレイ中設定モーダル（色数はタイトルで選択済みのものを使用） -->
-  <div id="settings-modal" class="modal-backdrop">
-    <div class="modal">
+  <!-- 設定モーダル -->
+  <div id="settings-modal" class="modal-bg">
+    <div class="modal-panel">
       <h2>設定</h2>
 
-      <div class="setting-group">
-        <div class="setting-title">落下スピード</div>
-        <div class="option-grid-2">
-          <button class="opt-btn speed-opt" data-speed="0">手動のみ</button>
-          <button class="opt-btn speed-opt" data-speed="1100">ゆっくり</button>
-          <button class="opt-btn speed-opt active" data-speed="650">ふつう</button>
-          <button class="opt-btn speed-opt" data-speed="280">はやい</button>
+      <div class="sec">
+        <div class="label">落下スピード</div>
+        <div class="grid-2">
+          <button type="button" class="chip-btn speed-choice" data-speed="0">手動のみ</button>
+          <button type="button" class="chip-btn speed-choice" data-speed="1000">ゆっくり</button>
+          <button type="button" class="chip-btn speed-choice active" data-speed="600">ふつう</button>
+          <button type="button" class="chip-btn speed-choice" data-speed="250">はやい</button>
         </div>
       </div>
 
-      <div class="setting-group">
-        <div class="setting-title">落下予測（ゴースト表示）</div>
-        <div class="option-grid-2">
-          <button class="opt-btn ghost-opt active" data-ghost="1">表示する</button>
-          <button class="opt-btn ghost-opt" data-ghost="0">非表示</button>
+      <div class="sec">
+        <div class="label">落下予測（ゴースト）</div>
+        <div class="grid-2">
+          <button type="button" class="chip-btn ghost-choice active" data-ghost="1">表示する</button>
+          <button type="button" class="chip-btn ghost-choice" data-ghost="0">非表示</button>
         </div>
       </div>
 
-      <div class="modal-actions">
-        <button id="reset-btn" class="btn btn-danger">盤面をリセット</button>
-        <button id="close-settings" class="btn btn-primary">閉じる</button>
+      <div class="actions">
+        <button type="button" id="reset-btn" class="act-btn act-reset">盤面をリセット</button>
+        <button type="button" id="close-settings-btn" class="act-btn act-close">閉じる</button>
       </div>
     </div>
   </div>
 
   <!-- ゲームオーバーモーダル -->
-  <div id="gameover-modal" class="modal-backdrop">
-    <div class="modal">
+  <div id="gameover-modal" class="modal-bg">
+    <div class="modal-panel">
       <h2>ここまで積み上がりました</h2>
-      <div class="modal-actions">
-        <button id="retry-btn" class="btn btn-primary">もう一度組み立てる</button>
+      <div class="actions">
+        <button type="button" id="retry-btn" class="act-btn act-close">もう一度組み立てる</button>
       </div>
     </div>
   </div>
 
   <script>
-    (() => {
-      const COLS = 6;
-      const VISIBLE_ROWS = 12;
-      const HIDDEN_ROWS = 1;
-      const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS;
+    const COLS = 6;
+    const VISIBLE_ROWS = 12;
+    const HIDDEN_ROWS = 1;
+    const TOTAL_ROWS = VISIBLE_ROWS + HIDDEN_ROWS;
 
-      const COLORS = [
-        null,
-        { fill: "#ef4444", stroke: "#dc2626" },
-        { fill: "#3b82f6", stroke: "#2563eb" },
-        { fill: "#22c55e", stroke: "#16a34a" },
-        { fill: "#eab308", stroke: "#ca8a04" },
-        { fill: "#a855f7", stroke: "#9333ea" }
-      ];
+    const COLORS = [
+      null,
+      { fill: "#ef4444", stroke: "#dc2626" },
+      { fill: "#3b82f6", stroke: "#2563eb" },
+      { fill: "#22c55e", stroke: "#16a34a" },
+      { fill: "#eab308", stroke: "#ca8a04" },
+      { fill: "#a855f7", stroke: "#9333ea" }
+    ];
 
-      const DIRS = [
-        { dx: 0, dy: -1 },
-        { dx: 1, dy: 0 },
-        { dx: 0, dy: 1 },
-        { dx: -1, dy: 0 }
-      ];
+    const DIRS = [
+      { dx: 0, dy: -1 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 0 }
+    ];
 
-      const titleScreen = document.getElementById("title-screen");
-      const startBtn = document.getElementById("start-btn");
+    const titleScreen = document.getElementById("title-screen");
+    const startBtn = document.getElementById("start-btn");
+    const settingsBtn = document.getElementById("settings-btn");
+    const settingsModal = document.getElementById("settings-modal");
+    const closeSettingsBtn = document.getElementById("close-settings-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const gameoverModal = document.getElementById("gameover-modal");
+    const retryBtn = document.getElementById("retry-btn");
+    const chainPop = document.getElementById("chain-pop");
 
-      const boardCanvas = document.getElementById("board-canvas");
-      const ctx = boardCanvas.getContext("2d");
-      const nextCanvas = document.getElementById("next-canvas");
-      const nextCtx = nextCanvas.getContext("2d");
-      const chainBanner = document.getElementById("chain-banner");
+    const boardCanvas = document.getElementById("board-canvas");
+    const ctx = boardCanvas.getContext("2d");
+    const nextCanvas = document.getElementById("next-canvas");
+    const nextCtx = nextCanvas.getContext("2d");
+    const gameScreen = document.getElementById("game-screen");
 
-      const settingsModal = document.getElementById("settings-modal");
-      const gameoverModal = document.getElementById("gameover-modal");
-      const openSettingsBtn = document.getElementById("open-settings");
-      const closeSettingsBtn = document.getElementById("close-settings");
-      const resetBtn = document.getElementById("reset-btn");
-      const retryBtn = document.getElementById("retry-btn");
+    let cellSize = 36;
+    let board = [];
+    let current = null;
+    let nextQueue = [];
 
-      let cellSize = 36;
-      let board = [];
-      let current = null;
-      let nextQueue = [];
+    let colorCount = 4;
+    let dropMs = 600;
+    let showGhost = true;
 
-      let dropInterval = 650; // ms (0 = 手動のみ)
-      let colorCount = 4;     // タイトル画面で決定
-      let showGhost = true;
+    let running = false;
+    let resolving = false;
+    let settingsOpen = false;
+    let gameOver = false;
+    let fallTimer = null;
 
-      let fallAccumulator = 0;
-      let lastFrameTime = 0;
-      let isResolving = false;
-      let isPaused = false;
-      let isGameOver = false;
-      let isStarted = false;
+    function fitBoard() {
+      const maxH = window.innerHeight - 110;
+      const maxW = window.innerWidth - 105;
+      cellSize = Math.max(26, Math.min(44, Math.floor(Math.min(maxW / COLS, maxH / VISIBLE_ROWS))));
+      boardCanvas.width = COLS * cellSize;
+      boardCanvas.height = VISIBLE_ROWS * cellSize;
+      draw();
+    }
 
-      function resizeCanvas() {
-        const maxH = window.innerHeight - 115;
-        const maxW = window.innerWidth - 110;
-        cellSize = Math.floor(Math.min(maxW / COLS, maxH / VISIBLE_ROWS));
-        cellSize = Math.max(26, Math.min(44, cellSize));
+    function randColor() {
+      return Math.floor(Math.random() * colorCount) + 1;
+    }
 
-        boardCanvas.width = COLS * cellSize;
-        boardCanvas.height = VISIBLE_ROWS * cellSize;
-        render();
+    function makePair() {
+      return { main: randColor(), sub: randColor() };
+    }
+
+    function makeBoard() {
+      return Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(0));
+    }
+
+    function clearFallTimer() {
+      if (fallTimer !== null) {
+        clearInterval(fallTimer);
+        fallTimer = null;
       }
+    }
 
-      function randomColor() {
-        return Math.floor(Math.random() * colorCount) + 1;
-      }
-
-      function createEmptyBoard() {
-        return Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(0));
-      }
-
-      function generatePair() {
-        return { main: randomColor(), sub: randomColor() };
-      }
-
-      function canPlay() {
-        return isStarted && !isResolving && !isPaused && !isGameOver && current !== null;
-      }
-
-      function startNewSession() {
-        board = createEmptyBoard();
-        nextQueue = [generatePair(), generatePair()];
-        fallAccumulator = 0;
-        lastFrameTime = performance.now();
-        isResolving = false;
-        isPaused = false;
-        isGameOver = false;
-        isStarted = true;
-        gameoverModal.classList.remove("open");
-        spawnPiece();
-        render();
-      }
-
-      function spawnPiece() {
-        const pair = nextQueue.shift();
-        nextQueue.push(generatePair());
-        renderNext();
-
-        current = {
-          x: 2,
-          y: 1,
-          rot: 0,
-          main: pair.main,
-          sub: pair.sub
-        };
-        fallAccumulator = 0;
-
-        if (board[1][2] !== 0) {
-          current = null;
-          isGameOver = true;
-          gameoverModal.classList.add("open");
+    function setupFallTimer() {
+      clearFallTimer();
+      if (!running || settingsOpen || resolving || gameOver || dropMs <= 0) return;
+      fallTimer = setInterval(() => {
+        if (running && !settingsOpen && !resolving && !gameOver && current) {
+          stepDown();
         }
-      }
+      }, dropMs);
+    }
 
-      function getSubPos(x, y, rot) {
-        return {
-          x: x + DIRS[rot].dx,
-          y: y + DIRS[rot].dy
-        };
-      }
+    function resetBoardState() {
+      clearFallTimer();
+      board = makeBoard();
+      nextQueue = [makePair(), makePair()];
+      resolving = false;
+      gameOver = false;
+      gameoverModal.classList.remove("open");
+      spawnNextPiece();
+      setupFallTimer();
+      draw();
+    }
 
-      function isValidPos(x, y, rot) {
-        const sub = getSubPos(x, y, rot);
-        const cells = [{ x, y }, sub];
-        for (const c of cells) {
-          if (c.x < 0 || c.x >= COLS || c.y < 0 || c.y >= TOTAL_ROWS) return false;
-          if (board[c.y][c.x] !== 0) return false;
-        }
-        return true;
-      }
+    function spawnNextPiece() {
+      const pair = nextQueue.shift();
+      nextQueue.push(makePair());
+      drawNext();
 
-      function moveHorizontal(dx) {
-        if (!canPlay()) return false;
-        if (isValidPos(current.x + dx, current.y, current.rot)) {
-          current.x += dx;
-          render();
-          return true;
-        }
-        return false;
-      }
+      current = {
+        x: 2,
+        y: 1,
+        rot: 0,
+        main: pair.main,
+        sub: pair.sub
+      };
 
-      function rotate(dir) {
-        if (!canPlay()) return;
-        const nextRot = (current.rot + dir + 4) % 4;
-
-        if (isValidPos(current.x, current.y, nextRot)) {
-          current.rot = nextRot;
-          render();
-          return;
-        }
-        const kicks = [
-          { dx: -1, dy: 0 },
-          { dx: 1, dy: 0 },
-          { dx: 0, dy: -1 }
-        ];
-        for (const k of kicks) {
-          if (isValidPos(current.x + k.dx, current.y + k.dy, nextRot)) {
-            current.x += k.dx;
-            current.y += k.dy;
-            current.rot = nextRot;
-            render();
-            return;
-          }
-        }
-      }
-
-      // 1段落下（自動落下・下ドラッグ共用）
-      function dropOneStep() {
-        if (!canPlay()) return false;
-        if (isValidPos(current.x, current.y + 1, current.rot)) {
-          current.y += 1;
-          fallAccumulator = 0;
-          render();
-          return true;
-        } else {
-          lockPiece();
-          return false;
-        }
-      }
-
-      function hardDrop() {
-        if (!canPlay()) return;
-        while (isValidPos(current.x, current.y + 1, current.rot)) {
-          current.y += 1;
-        }
-        fallAccumulator = 0;
-        render();
-        lockPiece();
-      }
-
-      function lockPiece() {
-        if (!current) return;
-        const sub = getSubPos(current.x, current.y, current.rot);
-        board[current.y][current.x] = current.main;
-        if (sub.y >= 0 && sub.y < TOTAL_ROWS) {
-          board[sub.y][sub.x] = current.sub;
-        }
+      if (board[1][2] !== 0) {
         current = null;
-        resolveBoard();
+        gameOver = true;
+        clearFallTimer();
+        gameoverModal.classList.add("open");
       }
+    }
 
-      function applyGravity() {
-        let moved = false;
+    function subPos(x, y, rot) {
+      return { x: x + DIRS[rot].dx, y: y + DIRS[rot].dy };
+    }
+
+    function canPlace(x, y, rot) {
+      const s = subPos(x, y, rot);
+      const pts = [{ x, y }, s];
+      for (const p of pts) {
+        if (p.x < 0 || p.x >= COLS || p.y < 0 || p.y >= TOTAL_ROWS) return false;
+        if (board[p.y][p.x] !== 0) return false;
+      }
+      return true;
+    }
+
+    function canControl() {
+      return running && !settingsOpen && !resolving && !gameOver && current !== null;
+    }
+
+    function moveX(dx) {
+      if (!canControl()) return;
+      if (canPlace(current.x + dx, current.y, current.rot)) {
+        current.x += dx;
+        draw();
+      }
+    }
+
+    function turn(dir) {
+      if (!canControl()) return;
+      const nextRot = (current.rot + dir + 4) % 4;
+      if (canPlace(current.x, current.y, nextRot)) {
+        current.rot = nextRot;
+        draw();
+        return;
+      }
+      const kicks = [
+        { dx: -1, dy: 0 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: -1 }
+      ];
+      for (const k of kicks) {
+        if (canPlace(current.x + k.dx, current.y + k.dy, nextRot)) {
+          current.x += k.dx;
+          current.y += k.dy;
+          current.rot = nextRot;
+          draw();
+          return;
+        }
+      }
+    }
+
+    function stepDown() {
+      if (!canControl()) return;
+      if (canPlace(current.x, current.y + 1, current.rot)) {
+        current.y += 1;
+        draw();
+      } else {
+        fixPiece();
+      }
+    }
+
+    function dropHard() {
+      if (!canControl()) return;
+      while (canPlace(current.x, current.y + 1, current.rot)) {
+        current.y += 1;
+      }
+      draw();
+      fixPiece();
+    }
+
+    function fixPiece() {
+      if (!current) return;
+      clearFallTimer();
+      const s = subPos(current.x, current.y, current.rot);
+      board[current.y][current.x] = current.main;
+      if (s.y >= 0 && s.y < TOTAL_ROWS) {
+        board[s.y][s.x] = current.sub;
+      }
+      current = null;
+      resolveChains();
+    }
+
+    function dropFloating() {
+      let moved = false;
+      for (let x = 0; x < COLS; x++) {
+        let writeY = TOTAL_ROWS - 1;
+        for (let y = TOTAL_ROWS - 1; y >= 0; y--) {
+          if (board[y][x] !== 0) {
+            if (y !== writeY) {
+              board[writeY][x] = board[y][x];
+              board[y][x] = 0;
+              moved = true;
+            }
+            writeY--;
+          }
+        }
+      }
+      return moved;
+    }
+
+    function findGroups() {
+      const seen = Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(false));
+      const targets = [];
+
+      for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
-          let writeY = TOTAL_ROWS - 1;
-          for (let y = TOTAL_ROWS - 1; y >= 0; y--) {
-            if (board[y][x] !== 0) {
-              if (y !== writeY) {
-                board[writeY][x] = board[y][x];
-                board[y][x] = 0;
-                moved = true;
-              }
-              writeY--;
-            }
-          }
-        }
-        return moved;
-      }
+          const c = board[y][x];
+          if (c === 0 || seen[y][x]) continue;
 
-      function findMatches() {
-        const visited = Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(false));
-        const toClear = [];
+          const group = [];
+          const q = [{ x, y }];
+          seen[y][x] = true;
 
-        for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
-          for (let x = 0; x < COLS; x++) {
-            const color = board[y][x];
-            if (color === 0 || visited[y][x]) continue;
-
-            const group = [];
-            const queue = [{ x, y }];
-            visited[y][x] = true;
-
-            while (queue.length > 0) {
-              const p = queue.shift();
-              group.push(p);
-
-              for (const d of DIRS) {
-                const nx = p.x + d.dx;
-                const ny = p.y + d.dy;
-                if (
-                  nx >= 0 && nx < COLS &&
-                  ny >= HIDDEN_ROWS && ny < TOTAL_ROWS &&
-                  !visited[ny][nx] &&
-                  board[ny][nx] === color
-                ) {
-                  visited[ny][nx] = true;
-                  queue.push({ x: nx, y: ny });
-                }
+          while (q.length > 0) {
+            const p = q.shift();
+            group.push(p);
+            for (const d of DIRS) {
+              const nx = p.x + d.dx;
+              const ny = p.y + d.dy;
+              if (
+                nx >= 0 && nx < COLS &&
+                ny >= HIDDEN_ROWS && ny < TOTAL_ROWS &&
+                !seen[ny][nx] &&
+                board[ny][nx] === c
+              ) {
+                seen[ny][nx] = true;
+                q.push({ x: nx, y: ny });
               }
             }
+          }
 
-            if (group.length >= 4) {
-              toClear.push(...group);
-            }
+          if (group.length >= 4) {
+            targets.push(...group);
           }
         }
-        return toClear;
+      }
+      return targets;
+    }
+
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    function showChainPop(n) {
+      if (n < 2) return;
+      chainPop.textContent = `${n} 連鎖!`;
+      chainPop.classList.add("show");
+      setTimeout(() => chainPop.classList.remove("show"), 750);
+    }
+
+    async function resolveChains() {
+      resolving = true;
+      let chain = 0;
+
+      if (dropFloating()) {
+        draw();
+        await wait(150);
       }
 
-      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      while (true) {
+        const matches = findGroups();
+        if (matches.length === 0) break;
 
-      function showChain(count) {
-        if (count < 2) return;
-        chainBanner.textContent = `${count} 連鎖!`;
-        chainBanner.classList.add("show");
-        setTimeout(() => {
-          chainBanner.classList.remove("show");
-        }, 750);
-      }
+        chain += 1;
+        showChainPop(chain);
 
-      async function resolveBoard() {
-        isResolving = true;
-        let chainCount = 0;
-
-        if (applyGravity()) {
-          render();
-          await sleep(150);
+        for (const m of matches) {
+          board[m.y][m.x] = 0;
         }
+        draw();
+        await wait(230);
 
-        while (true) {
-          const matches = findMatches();
-          if (matches.length === 0) break;
-
-          chainCount++;
-          showChain(chainCount);
-
-          for (const m of matches) {
-            board[m.y][m.x] = 0;
-          }
-          render();
-          await sleep(230);
-
-          if (applyGravity()) {
-            render();
-            await sleep(170);
-          }
-        }
-
-        isResolving = false;
-        if (!isPaused && !isGameOver && isStarted) {
-          spawnPiece();
-          render();
+        if (dropFloating()) {
+          draw();
+          await wait(170);
         }
       }
 
-      // メインループ（毎フレーム確実に経過時間を加算して自動落下）
-      function loop(now) {
-        const dt = Math.min(100, now - lastFrameTime);
-        lastFrameTime = now;
+      resolving = false;
+      if (running && !gameOver) {
+        spawnNextPiece();
+        setupFallTimer();
+        draw();
+      }
+    }
 
-        if (canPlay() && dropInterval > 0) {
-          fallAccumulator += dt;
-          while (fallAccumulator >= dropInterval && canPlay()) {
-            fallAccumulator -= dropInterval;
-            if (!dropOneStep()) break;
-          }
-        }
+    function paintPuyo(c2d, px, py, size, colorId, link = null, alpha = 1) {
+      if (!colorId) return;
+      const col = COLORS[colorId];
+      const r = size * 0.42;
+      const cx = px + size / 2;
+      const cy = py + size / 2;
 
-        requestAnimationFrame(loop);
+      c2d.save();
+      c2d.globalAlpha = alpha;
+      c2d.fillStyle = col.fill;
+      c2d.strokeStyle = col.stroke;
+      c2d.lineWidth = 2;
+
+      if (link) {
+        const bw = r * 1.15;
+        if (link.up) c2d.fillRect(cx - bw / 2, py, bw, size / 2);
+        if (link.down) c2d.fillRect(cx - bw / 2, cy, bw, size / 2);
+        if (link.left) c2d.fillRect(px, cy - bw / 2, size / 2, bw);
+        if (link.right) c2d.fillRect(cx, cy - bw / 2, size / 2, bw);
       }
 
-      function drawPuyo(context, px, py, size, colorId, neighbors = null, alpha = 1) {
-        if (!colorId) return;
-        const c = COLORS[colorId];
-        const r = size * 0.42;
-        const cx = px + size / 2;
-        const cy = py + size / 2;
+      c2d.beginPath();
+      c2d.arc(cx, cy, r, 0, Math.PI * 2);
+      c2d.fill();
+      c2d.stroke();
 
-        context.save();
-        context.globalAlpha = alpha;
-        context.fillStyle = c.fill;
-        context.strokeStyle = c.stroke;
-        context.lineWidth = 2;
+      c2d.fillStyle = "rgba(255,255,255,0.35)";
+      c2d.beginPath();
+      c2d.arc(cx - r * 0.32, cy - r * 0.32, r * 0.22, 0, Math.PI * 2);
+      c2d.fill();
 
-        if (neighbors) {
-          const bw = r * 1.15;
-          if (neighbors.up) context.fillRect(cx - bw / 2, py, bw, size / 2);
-          if (neighbors.down) context.fillRect(cx - bw / 2, cy, bw, size / 2);
-          if (neighbors.left) context.fillRect(px, cy - bw / 2, size / 2, bw);
-          if (neighbors.right) context.fillRect(cx, cy - bw / 2, size / 2, bw);
-        }
+      c2d.restore();
+    }
 
-        context.beginPath();
-        context.arc(cx, cy, r, 0, Math.PI * 2);
-        context.fill();
-        context.stroke();
+    function drawNext() {
+      nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+      if (nextQueue.length < 2) return;
 
-        context.fillStyle = "rgba(255, 255, 255, 0.35)";
-        context.beginPath();
-        context.arc(cx - r * 0.32, cy - r * 0.32, r * 0.22, 0, Math.PI * 2);
-        context.fill();
+      const p1 = nextQueue[0];
+      const p2 = nextQueue[1];
 
-        context.restore();
-      }
+      const s1 = 28;
+      const x1 = (nextCanvas.width - s1) / 2;
+      paintPuyo(nextCtx, x1, 2, s1, p1.sub);
+      paintPuyo(nextCtx, x1, 2 + s1 - 2, s1, p1.main);
 
-      function renderNext() {
-        nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-        if (nextQueue.length < 2) return;
+      nextCtx.strokeStyle = "#e5e7eb";
+      nextCtx.lineWidth = 1;
+      nextCtx.beginPath();
+      nextCtx.moveTo(4, 62);
+      nextCtx.lineTo(nextCanvas.width - 4, 62);
+      nextCtx.stroke();
 
-        const first = nextQueue[0];
-        const second = nextQueue[1];
+      const s2 = 20;
+      const x2 = (nextCanvas.width - s2) / 2;
+      paintPuyo(nextCtx, x2, 70, s2, p2.sub);
+      paintPuyo(nextCtx, x2, 70 + s2 - 2, s2, p2.main);
+    }
 
-        const s1 = 28;
-        const x1 = (nextCanvas.width - s1) / 2;
-        drawPuyo(nextCtx, x1, 2, s1, first.sub);
-        drawPuyo(nextCtx, x1, 2 + s1 - 2, s1, first.main);
+    function draw() {
+      ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
-        nextCtx.strokeStyle = "#e5e7eb";
-        nextCtx.lineWidth = 1;
-        nextCtx.beginPath();
-        nextCtx.moveTo(4, 62);
-        nextCtx.lineTo(nextCanvas.width - 4, 62);
-        nextCtx.stroke();
-
-        const s2 = 20;
-        const x2 = (nextCanvas.width - s2) / 2;
-        drawPuyo(nextCtx, x2, 70, s2, second.sub);
-        drawPuyo(nextCtx, x2, 70 + s2 - 2, s2, second.main);
-      }
-
-      function render() {
-        ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
-
-        ctx.strokeStyle = "#e0e3e8";
-        ctx.lineWidth = 1;
-        for (let x = 1; x < COLS; x++) {
-          ctx.beginPath();
-          ctx.moveTo(x * cellSize, 0);
-          ctx.lineTo(x * cellSize, boardCanvas.height);
-          ctx.stroke();
-        }
-        for (let y = 1; y < VISIBLE_ROWS; y++) {
-          ctx.beginPath();
-          ctx.moveTo(0, y * cellSize);
-          ctx.lineTo(boardCanvas.width, y * cellSize);
-          ctx.stroke();
-        }
-
-        const deathX = 2 * cellSize + cellSize / 2;
-        const deathY = cellSize / 2;
-        ctx.strokeStyle = "rgba(220, 38, 38, 0.35)";
-        ctx.lineWidth = 2;
+      ctx.strokeStyle = "#e0e3e8";
+      ctx.lineWidth = 1;
+      for (let x = 1; x < COLS; x++) {
         ctx.beginPath();
-        ctx.moveTo(deathX - 6, deathY - 6);
-        ctx.lineTo(deathX + 6, deathY + 6);
-        ctx.moveTo(deathX + 6, deathY - 6);
-        ctx.lineTo(deathX - 6, deathY + 6);
+        ctx.moveTo(x * cellSize, 0);
+        ctx.lineTo(x * cellSize, boardCanvas.height);
         ctx.stroke();
+      }
+      for (let y = 1; y < VISIBLE_ROWS; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * cellSize);
+        ctx.lineTo(boardCanvas.width, y * cellSize);
+        ctx.stroke();
+      }
 
-        for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
-          for (let x = 0; x < COLS; x++) {
-            const color = board[y][x];
-            if (!color) continue;
-            const neighbors = {
-              up: y > HIDDEN_ROWS && board[y - 1][x] === color,
-              down: y < TOTAL_ROWS - 1 && board[y + 1][x] === color,
-              left: x > 0 && board[y][x - 1] === color,
-              right: x < COLS - 1 && board[y][x + 1] === color
-            };
-            drawPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, color, neighbors);
-          }
-        }
+      const dx = 2 * cellSize + cellSize / 2;
+      const dy = cellSize / 2;
+      ctx.strokeStyle = "rgba(220,38,38,0.35)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(dx - 6, dy - 6);
+      ctx.lineTo(dx + 6, dy + 6);
+      ctx.moveTo(dx + 6, dy - 6);
+      ctx.lineTo(dx - 6, dy + 6);
+      ctx.stroke();
 
-        if (current && isStarted && !isGameOver) {
-          if (showGhost && !isResolving) {
-            let ghostY = current.y;
-            while (isValidPos(current.x, ghostY + 1, current.rot)) {
-              ghostY++;
-            }
-            const ghostSub = getSubPos(current.x, ghostY, current.rot);
-            if (ghostY >= HIDDEN_ROWS) {
-              drawPuyo(ctx, current.x * cellSize, (ghostY - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.22);
-            }
-            if (ghostSub.y >= HIDDEN_ROWS) {
-              drawPuyo(ctx, ghostSub.x * cellSize, (ghostSub.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.22);
-            }
-          }
-
-          const sub = getSubPos(current.x, current.y, current.rot);
-          drawPuyo(ctx, current.x * cellSize, (current.y - HIDDEN_ROWS) * cellSize, cellSize, current.main);
-          drawPuyo(ctx, sub.x * cellSize, (sub.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub);
+      for (let y = HIDDEN_ROWS; y < TOTAL_ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const c = board[y][x];
+          if (!c) continue;
+          const link = {
+            up: y > HIDDEN_ROWS && board[y - 1][x] === c,
+            down: y < TOTAL_ROWS - 1 && board[y + 1][x] === c,
+            left: x > 0 && board[y][x - 1] === c,
+            right: x < COLS - 1 && board[y][x + 1] === c
+          };
+          paintPuyo(ctx, x * cellSize, (y - HIDDEN_ROWS) * cellSize, cellSize, c, link);
         }
       }
 
-      // フリック・ドラッグ・タップ操作
-      let activePointerId = null;
-      let touchStartX = 0;
-      let touchStartY = 0;
-      let lastMoveX = 0;
-      let lastMoveY = 0;
-      let touchStartTime = 0;
-      let hasMoved = false;
-
-      const appEl = document.getElementById("app");
-
-      appEl.addEventListener("pointerdown", (e) => {
-        if (!canPlay() || activePointerId !== null) return;
-        if (e.target.closest("button") || settingsModal.classList.contains("open") || gameoverModal.classList.contains("open")) {
-          return;
-        }
-        activePointerId = e.pointerId;
-        touchStartX = e.clientX;
-        touchStartY = e.clientY;
-        lastMoveX = e.clientX;
-        lastMoveY = e.clientY;
-        touchStartTime = performance.now();
-        hasMoved = false;
-      });
-
-      appEl.addEventListener("pointermove", (e) => {
-        if (e.pointerId !== activePointerId || !canPlay()) return;
-
-        const dx = e.clientX - lastMoveX;
-        const dy = e.clientY - lastMoveY;
-        const stepX = cellSize * 0.65;
-        const stepY = cellSize * 0.65;
-
-        if (Math.abs(dx) >= stepX) {
-          const dir = dx > 0 ? 1 : -1;
-          moveHorizontal(dir);
-          lastMoveX = e.clientX;
-          hasMoved = true;
-        }
-
-        if (dy >= stepY) {
-          dropOneStep();
-          lastMoveY = e.clientY;
-          hasMoved = true;
-        }
-      });
-
-      function endPointer(e) {
-        if (e.pointerId !== activePointerId) return;
-        activePointerId = null;
-
-        if (!canPlay()) return;
-
-        const totalDx = e.clientX - touchStartX;
-        const totalDy = e.clientY - touchStartY;
-        const elapsed = performance.now() - touchStartTime;
-
-        if (totalDy > 45 && Math.abs(totalDy) > Math.abs(totalDx) * 1.5 && elapsed < 260) {
-          hardDrop();
-          return;
-        }
-
-        if (!hasMoved && Math.abs(totalDx) < 12 && Math.abs(totalDy) < 12) {
-          if (e.clientX < window.innerWidth / 2) {
-            rotate(-1);
-          } else {
-            rotate(1);
+      if (current && running && !gameOver) {
+        if (showGhost && !resolving) {
+          let gy = current.y;
+          while (canPlace(current.x, gy + 1, current.rot)) gy += 1;
+          const gs = subPos(current.x, gy, current.rot);
+          if (gy >= HIDDEN_ROWS) {
+            paintPuyo(ctx, current.x * cellSize, (gy - HIDDEN_ROWS) * cellSize, cellSize, current.main, null, 0.22);
+          }
+          if (gs.y >= HIDDEN_ROWS) {
+            paintPuyo(ctx, gs.x * cellSize, (gs.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub, null, 0.22);
           }
         }
+
+        const s = subPos(current.x, current.y, current.rot);
+        paintPuyo(ctx, current.x * cellSize, (current.y - HIDDEN_ROWS) * cellSize, cellSize, current.main);
+        paintPuyo(ctx, s.x * cellSize, (s.y - HIDDEN_ROWS) * cellSize, cellSize, current.sub);
+      }
+    }
+
+    // タイトル色数選択
+    document.querySelectorAll(".color-choice").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".color-choice").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        colorCount = Number(btn.dataset.colors);
+      });
+    });
+
+    // スタート
+    startBtn.addEventListener("click", () => {
+      titleScreen.classList.add("hidden");
+      running = true;
+      fitBoard();
+      resetBoardState();
+    });
+
+    // 設定開閉
+    settingsBtn.addEventListener("click", () => {
+      if (!running || gameOver) return;
+      settingsOpen = true;
+      clearFallTimer();
+      settingsModal.classList.add("open");
+    });
+
+    closeSettingsBtn.addEventListener("click", () => {
+      settingsOpen = false;
+      settingsModal.classList.remove("open");
+      setupFallTimer();
+      draw();
+    });
+
+    // 落下スピード
+    document.querySelectorAll(".speed-choice").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".speed-choice").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        dropMs = Number(btn.dataset.speed);
+        setupFallTimer();
+      });
+    });
+
+    // ゴースト表示
+    document.querySelectorAll(".ghost-choice").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".ghost-choice").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        showGhost = btn.dataset.ghost === "1";
+        draw();
+      });
+    });
+
+    // リセット / リトライ
+    resetBtn.addEventListener("click", () => {
+      settingsOpen = false;
+      settingsModal.classList.remove("open");
+      resetBoardState();
+    });
+
+    retryBtn.addEventListener("click", () => {
+      resetBoardState();
+    });
+
+    // タッチ・マウス操作
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let startT = 0;
+    let moved = false;
+
+    gameScreen.addEventListener("pointerdown", (e) => {
+      if (!canControl()) return;
+      if (e.target.closest("button") || e.target.closest(".modal-bg")) return;
+      dragging = true;
+      startX = lastX = e.clientX;
+      startY = lastY = e.clientY;
+      startT = performance.now();
+      moved = false;
+    });
+
+    gameScreen.addEventListener("pointermove", (e) => {
+      if (!dragging || !canControl()) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      const step = cellSize * 0.65;
+
+      if (Math.abs(dx) >= step) {
+        moveX(dx > 0 ? 1 : -1);
+        lastX = e.clientX;
+        moved = true;
+      }
+      if (dy >= step) {
+        stepDown();
+        lastY = e.clientY;
+        moved = true;
+      }
+    });
+
+    function finishPointer(e) {
+      if (!dragging) return;
+      dragging = false;
+      if (!canControl()) return;
+
+      const totalDx = e.clientX - startX;
+      const totalDy = e.clientY - startY;
+      const dt = performance.now() - startT;
+
+      if (totalDy > 45 && Math.abs(totalDy) > Math.abs(totalDx) * 1.5 && dt < 260) {
+        dropHard();
+        return;
       }
 
-      appEl.addEventListener("pointerup", endPointer);
-      appEl.addEventListener("pointercancel", endPointer);
-
-      // PCキーボード補助
-      window.addEventListener("keydown", (e) => {
-        if (!canPlay()) return;
-        if (e.key === "ArrowLeft") moveHorizontal(-1);
-        else if (e.key === "ArrowRight") moveHorizontal(1);
-        else if (e.key === "ArrowDown") dropOneStep();
-        else if (e.key === "ArrowUp") hardDrop();
-        else if (e.key === "z" || e.key === "Z") rotate(-1);
-        else if (e.key === "x" || e.key === "X") rotate(1);
-      });
-
-      // タイトル画面：色数選択
-      document.querySelectorAll(".title-color-opt").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          document.querySelectorAll(".title-color-opt").forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          colorCount = Number(btn.dataset.colors);
-        });
-      });
-
-      // タイトル画面：スタート
-      startBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        titleScreen.classList.add("hidden");
-        resizeCanvas();
-        startNewSession();
-      });
-
-      // プレイ中設定モーダル
-      openSettingsBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (!isStarted) return;
-        isPaused = true;
-        settingsModal.classList.add("open");
-      });
-
-      closeSettingsBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        settingsModal.classList.remove("open");
-        isPaused = false;
-        lastFrameTime = performance.now();
-        fallAccumulator = 0;
-        if (!isResolving && !isGameOver && !current) {
-          spawnPiece();
+      if (!moved && Math.abs(totalDx) < 12 && Math.abs(totalDy) < 12) {
+        if (e.clientX < window.innerWidth / 2) {
+          turn(-1);
+        } else {
+          turn(1);
         }
-        render();
-      });
+      }
+    }
 
-      document.querySelectorAll(".speed-opt").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          document.querySelectorAll(".speed-opt").forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          dropInterval = Number(btn.dataset.speed);
-          fallAccumulator = 0;
-        });
-      });
+    gameScreen.addEventListener("pointerup", finishPointer);
+    gameScreen.addEventListener("pointercancel", finishPointer);
 
-      document.querySelectorAll(".ghost-opt").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          document.querySelectorAll(".ghost-opt").forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          showGhost = btn.dataset.ghost === "1";
-          render();
-        });
-      });
+    // PCキーボード補助
+    window.addEventListener("keydown", (e) => {
+      if (!canControl()) return;
+      if (e.key === "ArrowLeft") moveX(-1);
+      else if (e.key === "ArrowRight") moveX(1);
+      else if (e.key === "ArrowDown") stepDown();
+      else if (e.key === "ArrowUp") dropHard();
+      else if (e.key === "z" || e.key === "Z") turn(-1);
+      else if (e.key === "x" || e.key === "X") turn(1);
+    });
 
-      resetBtn.addEventListener("click", () => {
-        settingsModal.classList.remove("open");
-        startNewSession();
-      });
-
-      retryBtn.addEventListener("click", () => {
-        startNewSession();
-      });
-
-      window.addEventListener("resize", resizeCanvas);
-      resizeCanvas();
-      lastFrameTime = performance.now();
-      requestAnimationFrame(loop);
-    })();
+    window.addEventListener("resize", fitBoard);
+    fitBoard();
   </script>
 </body>
 </html>
