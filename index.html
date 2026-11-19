@@ -434,13 +434,18 @@
       }, dropMs);
     }
 
+    // スタート・リセット・リトライすべてで共通して使う初期化メソッド
     function resetBoardState() {
+      running = true;
+      settingsOpen = false;
+      settingsModal.classList.remove("open");
       clearFallTimer();
       board = makeBoard();
       nextQueue = [makePair(), makePair()];
       resolving = false;
       gameOver = false;
       gameoverModal.classList.remove("open");
+      fitBoard();
       spawnNextPiece();
       setupFallTimer();
       draw();
@@ -780,11 +785,9 @@
       });
     });
 
-    // スタート
+    // スタート（リセットと同じメソッドを適用）
     startBtn.addEventListener("click", () => {
       titleScreen.classList.add("hidden");
-      running = true;
-      fitBoard();
       resetBoardState();
     });
 
@@ -824,15 +827,8 @@
     });
 
     // リセット / リトライ
-    resetBtn.addEventListener("click", () => {
-      settingsOpen = false;
-      settingsModal.classList.remove("open");
-      resetBoardState();
-    });
-
-    retryBtn.addEventListener("click", () => {
-      resetBoardState();
-    });
+    resetBtn.addEventListener("click", resetBoardState);
+    retryBtn.addEventListener("click", resetBoardState);
 
     // タッチ・マウス操作
     let dragging = false;
